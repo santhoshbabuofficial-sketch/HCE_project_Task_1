@@ -1,0 +1,62 @@
+/ {
+    aliases {
+        flow_sensor = &flow_sensor_input;
+    };
+};
+
+/*
+ * =========================
+ * FLOW SENSOR (PC2 GPIO)
+ * YF-S401 Pulse Input
+ * =========================
+ */
+flow_sensor_input: flow_sensor_input {
+    gpios = <&gpioc 2 GPIO_ACTIVE_HIGH>;
+};
+
+/*
+ * =========================
+ * PRESSURE SENSOR (PA0 ADC1_IN1)
+ * =========================
+ */
+&adc1 {
+    status = "okay";
+
+    channel@1 {
+        reg = <1>;
+        zephyr,gain = "ADC_GAIN_1";
+        zephyr,reference = "ADC_REF_INTERNAL";
+        zephyr,acquisition-time = <ADC_ACQ_TIME_DEFAULT>;
+        zephyr,resolution = <12>;
+    };
+};
+
+/*
+ * =========================
+ * I2C1 LCD (PCF8574)
+ * PB8 -> SCL
+ * PB9 -> SDA
+ * =========================
+ */
+&i2c1 {
+    status = "okay";
+    clock-frequency = <100000>;
+};
+
+/*
+ * =========================
+ * FDCAN1 (CAN-FD INTERFACE)
+ * PA11 -> RX
+ * PA12 -> TX
+ * TJA1051 / CJMCU-1051 MODULE
+ * =========================
+ */
+&fdcan1 {
+    status = "okay";
+
+    /*
+     * IMPORTANT:
+     * Clock source must match RCC config in STM32
+     * Zephyr handles default clock if not overridden
+     */
+};
