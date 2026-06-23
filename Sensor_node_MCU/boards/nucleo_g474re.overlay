@@ -5,25 +5,29 @@
 };
 
 /*
- * =========================
- * FLOW SENSOR (PC2 GPIO)
+ * ============================================================
+ * FLOW SENSOR
+ * PC2
  * YF-S401 Pulse Input
- * =========================
+ * ============================================================
  */
 flow_sensor_input: flow_sensor_input {
     gpios = <&gpioc 2 GPIO_ACTIVE_HIGH>;
 };
 
 /*
- * =========================
- * PRESSURE SENSOR (PA0 ADC1_IN1)
- * =========================
+ * ============================================================
+ * PRESSURE SENSOR
+ * PA0
+ * ADC1_IN1
+ * ============================================================
  */
 &adc1 {
     status = "okay";
 
     channel@1 {
         reg = <1>;
+
         zephyr,gain = "ADC_GAIN_1";
         zephyr,reference = "ADC_REF_INTERNAL";
         zephyr,acquisition-time = <ADC_ACQ_TIME_DEFAULT>;
@@ -32,31 +36,31 @@ flow_sensor_input: flow_sensor_input {
 };
 
 /*
- * =========================
- * I2C1 LCD (PCF8574)
- * PB8 -> SCL
- * PB9 -> SDA
- * =========================
+ * ============================================================
+ * LCD DISPLAY
+ * I2C1
+ *
+ * PB8  -> SCL
+ * PB9  -> SDA
+ *
+ * PCF8574 Backpack
+ * ============================================================
  */
 &i2c1 {
     status = "okay";
-    clock-frequency = <100000>;
+    clock-frequency = <I2C_BITRATE_STANDARD>;
 };
 
 /*
- * =========================
- * FDCAN1 (CAN-FD INTERFACE)
+ * ============================================================
+ * FDCAN1
+ *
  * PA11 -> RX
  * PA12 -> TX
- * TJA1051 / CJMCU-1051 MODULE
- * =========================
+ *
+ * TJA1051 CAN Transceiver
+ * ============================================================
  */
 &fdcan1 {
     status = "okay";
-
-    /*
-     * IMPORTANT:
-     * Clock source must match RCC config in STM32
-     * Zephyr handles default clock if not overridden
-     */
 };

@@ -2,10 +2,6 @@
 
 #include "pressure_sensor.hpp"
 #include "flow_sensor.hpp"
-
-/*
- * CAN-FD integration
- */
 #include "canfd.hpp"
 
 #include <cstdint>
@@ -20,19 +16,25 @@ void
 SensorManager::update()
 {
     /*
-     * Step 1: Read sensors
+     * Step 1:
+     * Read Pressure Sensor
      */
     pressure_mmhg_ =
         PressureSensor::readPressureMmHg();
 
+    /*
+     * Step 2:
+     * Read Flow Sensor
+     */
     flow_ml_min_ =
         FlowSensor::readFlowMlMin();
 
     /*
-     * Step 2: Send via CAN-FD
+     * Step 3:
+     * Transmit latest sensor values
      *
-     * This keeps system real-time synced:
-     * sensor update → CAN transmit
+     * CAN ID 0x300 -> Pressure
+     * CAN ID 0x301 -> Flow
      */
     CanFd::sendSensorData();
 }

@@ -16,6 +16,15 @@ public:
      */
     static void update();
 
+    /**
+     * @brief Display a custom message.
+     *
+     * Used for supervisor commands such as:
+     * "E Stop Broadcasting"
+     */
+    static void showMessage(
+        const char* text);
+
 private:
     LcdDisplay() = delete;
 };

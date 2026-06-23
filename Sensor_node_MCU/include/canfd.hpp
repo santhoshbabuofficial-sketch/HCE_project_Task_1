@@ -8,19 +8,36 @@ namespace sensor_node
 class CanFd
 {
 public:
+    /**
+     * Initialize CAN-FD interface.
+     */
     static bool init();
 
-    /*
-     * Heartbeat transmission
-     * Message: "I am Alive"
+    /**
+     * CAN ID: 0x200
+     * Payload: "I am Alive"
      */
     static void sendHeartbeat();
 
-    /*
-     * Sensor data transmission (future use)
-     * Pressure + Flow from SensorManager
+    /**
+     * CAN ID: 0x300
+     * Pressure Sensor Data
+     *
+     * CAN ID: 0x301
+     * Flow Sensor Data
      */
     static void sendSensorData();
+
+    /**
+     * Process received CAN messages.
+     *
+     * Called from:
+     * GpioOverlay CAN RX callback.
+     */
+    static void processReceivedMessage(
+        std::uint32_t id,
+        const std::uint8_t* data,
+        std::uint8_t length);
 
 private:
     static void transmit(

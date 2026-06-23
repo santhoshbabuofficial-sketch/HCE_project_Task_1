@@ -9,6 +9,7 @@ target_include_directories(app PRIVATE
 )
 
 target_sources(app PRIVATE
+
     src/main.cpp
 
     src/gpio_overlay.cpp
@@ -19,4 +20,8 @@ target_sources(app PRIVATE
     src/sensor_manager.cpp
 
     src/lcd_display.cpp
+
+    src/canfd.cpp
+
+    src/heartbeat.cpp
 )

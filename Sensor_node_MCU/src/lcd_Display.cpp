@@ -1,4 +1,4 @@
-#include "lcd_display.hpp"
+#include "lcd_Display.hpp"
 
 #include "gpio_overlay.hpp"
 #include "sensor_manager.hpp"
@@ -6,6 +6,13 @@
 #include <array>
 #include <cstdint>
 #include <cstdio>
+
+namespace
+{
+
+bool g_estop_active = false;
+
+} // namespace
 
 namespace sensor_node
 {
@@ -19,6 +26,15 @@ LcdDisplay::init()
 void
 LcdDisplay::update()
 {
+    /*
+     * Once E-Stop is active,
+     * normal sensor display is disabled.
+     */
+    if (g_estop_active)
+    {
+        return;
+    }
+
     const std::uint16_t pressure =
         SensorManager::getPressureMmHg();
 
@@ -55,6 +71,21 @@ LcdDisplay::update()
 
     GpioOverlay::lcdPrint(
         line2.data());
+}
+
+void
+LcdDisplay::showMessage(
+    const char* text)
+{
+    g_estop_active = true;
+
+    GpioOverlay::lcdClear();
+
+    GpioOverlay::lcdSetCursor(
+        0U,
+        0U);
+
+    GpioOverlay::lcdPrint(text);
 }
 
 } // namespace sensor_node
