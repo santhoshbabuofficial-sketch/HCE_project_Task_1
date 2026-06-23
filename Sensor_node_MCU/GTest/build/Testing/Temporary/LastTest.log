@@ -1,0 +1,300 @@
+Start testing: Jun 23 15:46 IST
+----------------------------------------------------------
+1/11 Testing: PressureSensorTest.Basic
+1/11 Test: PressureSensorTest.Basic
+Command: "/home/babu-inc-5831/Downloads/My_Project/HCE_project_Task_1/Sensor_node_MCU/GTest/build/sensor_node_tests" "--gtest_filter=PressureSensorTest.Basic" "--gtest_also_run_disabled_tests"
+Directory: /home/babu-inc-5831/Downloads/My_Project/HCE_project_Task_1/Sensor_node_MCU/GTest/build
+"PressureSensorTest.Basic" start time: Jun 23 15:46 IST
+Output:
+----------------------------------------------------------
+Running main() from ./googletest/src/gtest_main.cc
+Note: Google Test filter = PressureSensorTest.Basic
+[==========] Running 1 test from 1 test suite.
+[----------] Global test environment set-up.
+[----------] 1 test from PressureSensorTest
+[ RUN      ] PressureSensorTest.Basic
+[       OK ] PressureSensorTest.Basic (0 ms)
+[----------] 1 test from PressureSensorTest (0 ms total)
+
+[----------] Global test environment tear-down
+[==========] 1 test from 1 test suite ran. (0 ms total)
+[  PASSED  ] 1 test.
+<end of output>
+Test time =   0.00 sec
+----------------------------------------------------------
+Test Passed.
+"PressureSensorTest.Basic" end time: Jun 23 15:46 IST
+"PressureSensorTest.Basic" time elapsed: 00:00:00
+----------------------------------------------------------
+
+2/11 Testing: FlowSensorTest.Basic
+2/11 Test: FlowSensorTest.Basic
+Command: "/home/babu-inc-5831/Downloads/My_Project/HCE_project_Task_1/Sensor_node_MCU/GTest/build/sensor_node_tests" "--gtest_filter=FlowSensorTest.Basic" "--gtest_also_run_disabled_tests"
+Directory: /home/babu-inc-5831/Downloads/My_Project/HCE_project_Task_1/Sensor_node_MCU/GTest/build
+"FlowSensorTest.Basic" start time: Jun 23 15:46 IST
+Output:
+----------------------------------------------------------
+Running main() from ./googletest/src/gtest_main.cc
+Note: Google Test filter = FlowSensorTest.Basic
+[==========] Running 1 test from 1 test suite.
+[----------] Global test environment set-up.
+[----------] 1 test from FlowSensorTest
+[ RUN      ] FlowSensorTest.Basic
+[       OK ] FlowSensorTest.Basic (0 ms)
+[----------] 1 test from FlowSensorTest (0 ms total)
+
+[----------] Global test environment tear-down
+[==========] 1 test from 1 test suite ran. (0 ms total)
+[  PASSED  ] 1 test.
+<end of output>
+Test time =   0.00 sec
+----------------------------------------------------------
+Test Passed.
+"FlowSensorTest.Basic" end time: Jun 23 15:46 IST
+"FlowSensorTest.Basic" time elapsed: 00:00:00
+----------------------------------------------------------
+
+3/11 Testing: SensorManagerTest.Update
+3/11 Test: SensorManagerTest.Update
+Command: "/home/babu-inc-5831/Downloads/My_Project/HCE_project_Task_1/Sensor_node_MCU/GTest/build/sensor_node_tests" "--gtest_filter=SensorManagerTest.Update" "--gtest_also_run_disabled_tests"
+Directory: /home/babu-inc-5831/Downloads/My_Project/HCE_project_Task_1/Sensor_node_MCU/GTest/build
+"SensorManagerTest.Update" start time: Jun 23 15:46 IST
+Output:
+----------------------------------------------------------
+Running main() from ./googletest/src/gtest_main.cc
+Note: Google Test filter = SensorManagerTest.Update
+[==========] Running 1 test from 1 test suite.
+[----------] Global test environment set-up.
+[----------] 1 test from SensorManagerTest
+[ RUN      ] SensorManagerTest.Update
+[       OK ] SensorManagerTest.Update (0 ms)
+[----------] 1 test from SensorManagerTest (0 ms total)
+
+[----------] Global test environment tear-down
+[==========] 1 test from 1 test suite ran. (0 ms total)
+[  PASSED  ] 1 test.
+<end of output>
+Test time =   0.00 sec
+----------------------------------------------------------
+Test Passed.
+"SensorManagerTest.Update" end time: Jun 23 15:46 IST
+"SensorManagerTest.Update" time elapsed: 00:00:00
+----------------------------------------------------------
+
+4/11 Testing: LcdDisplayTest.Init
+4/11 Test: LcdDisplayTest.Init
+Command: "/home/babu-inc-5831/Downloads/My_Project/HCE_project_Task_1/Sensor_node_MCU/GTest/build/sensor_node_tests" "--gtest_filter=LcdDisplayTest.Init" "--gtest_also_run_disabled_tests"
+Directory: /home/babu-inc-5831/Downloads/My_Project/HCE_project_Task_1/Sensor_node_MCU/GTest/build
+"LcdDisplayTest.Init" start time: Jun 23 15:46 IST
+Output:
+----------------------------------------------------------
+Running main() from ./googletest/src/gtest_main.cc
+Note: Google Test filter = LcdDisplayTest.Init
+[==========] Running 1 test from 1 test suite.
+[----------] Global test environment set-up.
+[----------] 1 test from LcdDisplayTest
+[ RUN      ] LcdDisplayTest.Init
+[       OK ] LcdDisplayTest.Init (0 ms)
+[----------] 1 test from LcdDisplayTest (0 ms total)
+
+[----------] Global test environment tear-down
+[==========] 1 test from 1 test suite ran. (0 ms total)
+[  PASSED  ] 1 test.
+<end of output>
+Test time =   0.00 sec
+----------------------------------------------------------
+Test Passed.
+"LcdDisplayTest.Init" end time: Jun 23 15:46 IST
+"LcdDisplayTest.Init" time elapsed: 00:00:00
+----------------------------------------------------------
+
+5/11 Testing: LcdDisplayTest.Update
+5/11 Test: LcdDisplayTest.Update
+Command: "/home/babu-inc-5831/Downloads/My_Project/HCE_project_Task_1/Sensor_node_MCU/GTest/build/sensor_node_tests" "--gtest_filter=LcdDisplayTest.Update" "--gtest_also_run_disabled_tests"
+Directory: /home/babu-inc-5831/Downloads/My_Project/HCE_project_Task_1/Sensor_node_MCU/GTest/build
+"LcdDisplayTest.Update" start time: Jun 23 15:46 IST
+Output:
+----------------------------------------------------------
+Running main() from ./googletest/src/gtest_main.cc
+Note: Google Test filter = LcdDisplayTest.Update
+[==========] Running 1 test from 1 test suite.
+[----------] Global test environment set-up.
+[----------] 1 test from LcdDisplayTest
+[ RUN      ] LcdDisplayTest.Update
+[       OK ] LcdDisplayTest.Update (0 ms)
+[----------] 1 test from LcdDisplayTest (0 ms total)
+
+[----------] Global test environment tear-down
+[==========] 1 test from 1 test suite ran. (0 ms total)
+[  PASSED  ] 1 test.
+<end of output>
+Test time =   0.00 sec
+----------------------------------------------------------
+Test Passed.
+"LcdDisplayTest.Update" end time: Jun 23 15:46 IST
+"LcdDisplayTest.Update" time elapsed: 00:00:00
+----------------------------------------------------------
+
+6/11 Testing: LcdDisplayTest.ShowMessage
+6/11 Test: LcdDisplayTest.ShowMessage
+Command: "/home/babu-inc-5831/Downloads/My_Project/HCE_project_Task_1/Sensor_node_MCU/GTest/build/sensor_node_tests" "--gtest_filter=LcdDisplayTest.ShowMessage" "--gtest_also_run_disabled_tests"
+Directory: /home/babu-inc-5831/Downloads/My_Project/HCE_project_Task_1/Sensor_node_MCU/GTest/build
+"LcdDisplayTest.ShowMessage" start time: Jun 23 15:46 IST
+Output:
+----------------------------------------------------------
+Running main() from ./googletest/src/gtest_main.cc
+Note: Google Test filter = LcdDisplayTest.ShowMessage
+[==========] Running 1 test from 1 test suite.
+[----------] Global test environment set-up.
+[----------] 1 test from LcdDisplayTest
+[ RUN      ] LcdDisplayTest.ShowMessage
+[       OK ] LcdDisplayTest.ShowMessage (0 ms)
+[----------] 1 test from LcdDisplayTest (0 ms total)
+
+[----------] Global test environment tear-down
+[==========] 1 test from 1 test suite ran. (0 ms total)
+[  PASSED  ] 1 test.
+<end of output>
+Test time =   0.00 sec
+----------------------------------------------------------
+Test Passed.
+"LcdDisplayTest.ShowMessage" end time: Jun 23 15:46 IST
+"LcdDisplayTest.ShowMessage" time elapsed: 00:00:00
+----------------------------------------------------------
+
+7/11 Testing: CanFdTest.Init
+7/11 Test: CanFdTest.Init
+Command: "/home/babu-inc-5831/Downloads/My_Project/HCE_project_Task_1/Sensor_node_MCU/GTest/build/sensor_node_tests" "--gtest_filter=CanFdTest.Init" "--gtest_also_run_disabled_tests"
+Directory: /home/babu-inc-5831/Downloads/My_Project/HCE_project_Task_1/Sensor_node_MCU/GTest/build
+"CanFdTest.Init" start time: Jun 23 15:46 IST
+Output:
+----------------------------------------------------------
+Running main() from ./googletest/src/gtest_main.cc
+Note: Google Test filter = CanFdTest.Init
+[==========] Running 1 test from 1 test suite.
+[----------] Global test environment set-up.
+[----------] 1 test from CanFdTest
+[ RUN      ] CanFdTest.Init
+[       OK ] CanFdTest.Init (0 ms)
+[----------] 1 test from CanFdTest (0 ms total)
+
+[----------] Global test environment tear-down
+[==========] 1 test from 1 test suite ran. (0 ms total)
+[  PASSED  ] 1 test.
+<end of output>
+Test time =   0.00 sec
+----------------------------------------------------------
+Test Passed.
+"CanFdTest.Init" end time: Jun 23 15:46 IST
+"CanFdTest.Init" time elapsed: 00:00:00
+----------------------------------------------------------
+
+8/11 Testing: CanFdTest.Heartbeat
+8/11 Test: CanFdTest.Heartbeat
+Command: "/home/babu-inc-5831/Downloads/My_Project/HCE_project_Task_1/Sensor_node_MCU/GTest/build/sensor_node_tests" "--gtest_filter=CanFdTest.Heartbeat" "--gtest_also_run_disabled_tests"
+Directory: /home/babu-inc-5831/Downloads/My_Project/HCE_project_Task_1/Sensor_node_MCU/GTest/build
+"CanFdTest.Heartbeat" start time: Jun 23 15:46 IST
+Output:
+----------------------------------------------------------
+Running main() from ./googletest/src/gtest_main.cc
+Note: Google Test filter = CanFdTest.Heartbeat
+[==========] Running 1 test from 1 test suite.
+[----------] Global test environment set-up.
+[----------] 1 test from CanFdTest
+[ RUN      ] CanFdTest.Heartbeat
+[       OK ] CanFdTest.Heartbeat (0 ms)
+[----------] 1 test from CanFdTest (0 ms total)
+
+[----------] Global test environment tear-down
+[==========] 1 test from 1 test suite ran. (0 ms total)
+[  PASSED  ] 1 test.
+<end of output>
+Test time =   0.00 sec
+----------------------------------------------------------
+Test Passed.
+"CanFdTest.Heartbeat" end time: Jun 23 15:46 IST
+"CanFdTest.Heartbeat" time elapsed: 00:00:00
+----------------------------------------------------------
+
+9/11 Testing: CanFdTest.SensorData
+9/11 Test: CanFdTest.SensorData
+Command: "/home/babu-inc-5831/Downloads/My_Project/HCE_project_Task_1/Sensor_node_MCU/GTest/build/sensor_node_tests" "--gtest_filter=CanFdTest.SensorData" "--gtest_also_run_disabled_tests"
+Directory: /home/babu-inc-5831/Downloads/My_Project/HCE_project_Task_1/Sensor_node_MCU/GTest/build
+"CanFdTest.SensorData" start time: Jun 23 15:46 IST
+Output:
+----------------------------------------------------------
+Running main() from ./googletest/src/gtest_main.cc
+Note: Google Test filter = CanFdTest.SensorData
+[==========] Running 1 test from 1 test suite.
+[----------] Global test environment set-up.
+[----------] 1 test from CanFdTest
+[ RUN      ] CanFdTest.SensorData
+[       OK ] CanFdTest.SensorData (0 ms)
+[----------] 1 test from CanFdTest (0 ms total)
+
+[----------] Global test environment tear-down
+[==========] 1 test from 1 test suite ran. (0 ms total)
+[  PASSED  ] 1 test.
+<end of output>
+Test time =   0.00 sec
+----------------------------------------------------------
+Test Passed.
+"CanFdTest.SensorData" end time: Jun 23 15:46 IST
+"CanFdTest.SensorData" time elapsed: 00:00:00
+----------------------------------------------------------
+
+10/11 Testing: HeartbeatTest.Init
+10/11 Test: HeartbeatTest.Init
+Command: "/home/babu-inc-5831/Downloads/My_Project/HCE_project_Task_1/Sensor_node_MCU/GTest/build/sensor_node_tests" "--gtest_filter=HeartbeatTest.Init" "--gtest_also_run_disabled_tests"
+Directory: /home/babu-inc-5831/Downloads/My_Project/HCE_project_Task_1/Sensor_node_MCU/GTest/build
+"HeartbeatTest.Init" start time: Jun 23 15:46 IST
+Output:
+----------------------------------------------------------
+Running main() from ./googletest/src/gtest_main.cc
+Note: Google Test filter = HeartbeatTest.Init
+[==========] Running 1 test from 1 test suite.
+[----------] Global test environment set-up.
+[----------] 1 test from HeartbeatTest
+[ RUN      ] HeartbeatTest.Init
+[       OK ] HeartbeatTest.Init (0 ms)
+[----------] 1 test from HeartbeatTest (0 ms total)
+
+[----------] Global test environment tear-down
+[==========] 1 test from 1 test suite ran. (0 ms total)
+[  PASSED  ] 1 test.
+<end of output>
+Test time =   0.00 sec
+----------------------------------------------------------
+Test Passed.
+"HeartbeatTest.Init" end time: Jun 23 15:46 IST
+"HeartbeatTest.Init" time elapsed: 00:00:00
+----------------------------------------------------------
+
+11/11 Testing: HeartbeatTest.Update
+11/11 Test: HeartbeatTest.Update
+Command: "/home/babu-inc-5831/Downloads/My_Project/HCE_project_Task_1/Sensor_node_MCU/GTest/build/sensor_node_tests" "--gtest_filter=HeartbeatTest.Update" "--gtest_also_run_disabled_tests"
+Directory: /home/babu-inc-5831/Downloads/My_Project/HCE_project_Task_1/Sensor_node_MCU/GTest/build
+"HeartbeatTest.Update" start time: Jun 23 15:46 IST
+Output:
+----------------------------------------------------------
+Running main() from ./googletest/src/gtest_main.cc
+Note: Google Test filter = HeartbeatTest.Update
+[==========] Running 1 test from 1 test suite.
+[----------] Global test environment set-up.
+[----------] 1 test from HeartbeatTest
+[ RUN      ] HeartbeatTest.Update
+[       OK ] HeartbeatTest.Update (0 ms)
+[----------] 1 test from HeartbeatTest (0 ms total)
+
+[----------] Global test environment tear-down
+[==========] 1 test from 1 test suite ran. (0 ms total)
+[  PASSED  ] 1 test.
+<end of output>
+Test time =   0.00 sec
+----------------------------------------------------------
+Test Passed.
+"HeartbeatTest.Update" end time: Jun 23 15:46 IST
+"HeartbeatTest.Update" time elapsed: 00:00:00
+----------------------------------------------------------
+
+End testing: Jun 23 15:46 IST
