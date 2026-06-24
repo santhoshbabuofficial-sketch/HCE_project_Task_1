@@ -1,0 +1,58 @@
+/*
+ * ============================================================
+ * MOTOR DRIVER
+ *
+ * PA8 -> STEP (PWM Output)
+ * PB0 -> DIR
+ * PB1 -> EN
+ *
+ * TMC2209 Stepper Driver
+ * ============================================================
+ */
+
+ / {
+    aliases {
+        step_pwm = &pwm_step;
+        motor_dir = &motor_dir_output;
+        motor_en  = &motor_en_output;
+    };
+
+    pwm_step: pwm_step {
+        pwms = <&pwm1 1 PWM_MSEC(1) PWM_POLARITY_NORMAL>;
+    };
+
+    motor_dir_output: motor_dir_output {
+        gpios = <&gpiob 0 GPIO_ACTIVE_HIGH>;
+    };
+
+    motor_en_output: motor_en_output {
+        gpios = <&gpiob 1 GPIO_ACTIVE_HIGH>;
+    };
+};
+
+/*
+ * ============================================================
+ * FDCAN1
+ *
+ * PA11 -> RX
+ * PA12 -> TX
+ *
+ * TJA1051 CAN Transceiver
+ * ============================================================
+ */
+&fdcan1 {
+    status = "okay";
+};
+
+/*
+ * ============================================================
+ * PWM
+ *
+ * PA8 -> TIM1_CH1
+ *
+ * STEP Signal Generation
+ * ============================================================
+ */
+&pwm1 {
+    status = "okay";
+};

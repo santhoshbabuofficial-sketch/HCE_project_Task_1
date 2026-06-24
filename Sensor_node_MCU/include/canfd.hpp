@@ -15,7 +15,8 @@ public:
 
     /**
      * CAN ID: 0x200
-     * Payload: "I am Alive"
+     * Heartbeat
+     * No Payload
      */
     static void sendHeartbeat();
 

@@ -19,25 +19,6 @@ constexpr std::uint32_t kHeartbeatCanId = 0x200U;
 constexpr std::uint32_t kPressureCanId  = 0x300U;
 constexpr std::uint32_t kFlowCanId      = 0x301U;
 
-/*
- * ============================================================
- * Heartbeat Payload
- * ============================================================
- */
-constexpr std::uint8_t kHeartbeatData[] =
-{
-    'I',
-    ' ',
-    'a',
-    'm',
-    ' ',
-    'A',
-    'l',
-    'i',
-    'v',
-    'e'
-};
-
 } // namespace
 
 namespace sensor_node
@@ -54,8 +35,8 @@ CanFd::sendHeartbeat()
 {
     transmit(
         kHeartbeatCanId,
-        kHeartbeatData,
-        sizeof(kHeartbeatData));
+        nullptr,
+        0U);
 }
 
 void

@@ -15,7 +15,7 @@ public:
      * @brief Send heartbeat message.
      *
      * CAN ID : 0x200
-     * Payload: "I am Alive"
+     * No Payload
      */
     static void update();
 
