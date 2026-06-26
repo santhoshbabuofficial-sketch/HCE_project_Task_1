@@ -1,2 +1,0 @@
-# Load board Kconfig descriptions.
-osource "/home/babu-inc-5831/zephyrproject/zephyr/boards/st/nucleo_g474re/Kconfig.nucleo_g474re"

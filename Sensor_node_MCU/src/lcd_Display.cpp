@@ -10,6 +10,10 @@
 namespace
 {
 
+// ============================================================
+// LCD STATE
+// ============================================================
+
 bool g_estop_active = false;
 
 } // namespace
@@ -17,19 +21,13 @@ bool g_estop_active = false;
 namespace sensor_node
 {
 
-bool
-LcdDisplay::init()
+bool LcdDisplay::init() noexcept
 {
     return GpioOverlay::lcdInit();
 }
 
-void
-LcdDisplay::update()
+void LcdDisplay::update() noexcept
 {
-    /*
-     * Once E-Stop is active,
-     * normal sensor display is disabled.
-     */
     if (g_estop_active)
     {
         return;
@@ -47,44 +45,35 @@ LcdDisplay::update()
     (void)std::snprintf(
         line1.data(),
         line1.size(),
-        "Pressure=%u",
+        "P:%u mmHg",
         static_cast<unsigned>(pressure));
 
     (void)std::snprintf(
         line2.data(),
         line2.size(),
-        "Flow=%u",
+        "F:%u mL/min",
         static_cast<unsigned>(flow));
 
     GpioOverlay::lcdClear();
 
-    GpioOverlay::lcdSetCursor(
-        0U,
-        0U);
+    GpioOverlay::lcdSetCursor(0U, 0U);
+    GpioOverlay::lcdPrint(line1.data());
 
-    GpioOverlay::lcdPrint(
-        line1.data());
-
-    GpioOverlay::lcdSetCursor(
-        1U,
-        0U);
-
-    GpioOverlay::lcdPrint(
-        line2.data());
+    GpioOverlay::lcdSetCursor(1U, 0U);
+    GpioOverlay::lcdPrint(line2.data());
 }
 
-void
-LcdDisplay::showMessage(
-    const char* text)
+void LcdDisplay::showMessage(const char* text) noexcept
 {
+    if (text == nullptr)
+    {
+        return;
+    }
+
     g_estop_active = true;
 
     GpioOverlay::lcdClear();
-
-    GpioOverlay::lcdSetCursor(
-        0U,
-        0U);
-
+    GpioOverlay::lcdSetCursor(0U, 0U);
     GpioOverlay::lcdPrint(text);
 }
 

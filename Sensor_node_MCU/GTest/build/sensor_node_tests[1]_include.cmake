@@ -1,5 +1,0 @@
-if(EXISTS "/home/babu-inc-5831/Downloads/My_Project/HCE_project_Task_1/Sensor_node_MCU/GTest/build/sensor_node_tests[1]_tests.cmake")
-  include("/home/babu-inc-5831/Downloads/My_Project/HCE_project_Task_1/Sensor_node_MCU/GTest/build/sensor_node_tests[1]_tests.cmake")
-else()
-  add_test(sensor_node_tests_NOT_BUILT sensor_node_tests_NOT_BUILT)
-endif()

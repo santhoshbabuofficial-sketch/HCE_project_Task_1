@@ -6,22 +6,17 @@
 namespace
 {
 
-/*
- * YF-S401 calibration
- *
- * Flow(L/min) = PulseCountPerSecond / 98
- *
- * Convert directly to mL/min:
- *
- * Flow(mL/min) =
- * (PulseCountPerSecond * 1000) / 98
- */
-constexpr std::uint32_t kMlPerLitre = 1000U;
-constexpr std::uint32_t kPulsePerLitrePerMin = 98U;
+// ============================================================
+// YF-S401 Calibration Constants
+// ============================================================
 
-/*
- * Saturation limit
- */
+// Pulses per liter per minute (sensor characteristic)
+constexpr std::uint32_t kPulsePerLiterPerMin = 98U;
+
+// mL conversion factor
+constexpr std::uint32_t kMilliLiterPerLiter = 1000U;
+
+// Maximum safe output (uint16 saturation)
 constexpr std::uint16_t kMaxFlowMlMin = 65535U;
 
 } // namespace
@@ -29,23 +24,25 @@ constexpr std::uint16_t kMaxFlowMlMin = 65535U;
 namespace sensor_node
 {
 
-std::uint16_t
-FlowSensor::readFlowMlMin()
+std::uint16_t FlowSensor::readFlowMlMin() noexcept
 {
     const std::uint32_t pulse_count =
         GpioOverlay::getAndResetFlowPulseCount();
 
-    const std::uint32_t flow_ml_min =
-        (pulse_count * kMlPerLitre) /
-        kPulsePerLitrePerMin;
+    // Promote to 64-bit to avoid overflow in multiplication
+    const std::uint64_t scaled_pulses =
+        static_cast<std::uint64_t>(pulse_count) *
+        static_cast<std::uint64_t>(kMilliLiterPerLiter);
+
+    const std::uint64_t flow_ml_min =
+        scaled_pulses / kPulsePerLiterPerMin;
 
     if (flow_ml_min > kMaxFlowMlMin)
     {
         return kMaxFlowMlMin;
     }
 
-    return static_cast<std::uint16_t>(
-        flow_ml_min);
+    return static_cast<std::uint16_t>(flow_ml_min);
 }
 
 } // namespace sensor_node

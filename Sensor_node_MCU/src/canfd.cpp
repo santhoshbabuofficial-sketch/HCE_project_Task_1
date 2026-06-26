@@ -9,119 +9,103 @@
 namespace
 {
 
-/*
- * ============================================================
- * CAN IDs
- * ============================================================
- */
+// ============================================================
+// CAN IDs (System Definition)
+// ============================================================
+
 constexpr std::uint32_t kEstopCanId     = 0x101U;
 constexpr std::uint32_t kHeartbeatCanId = 0x200U;
 constexpr std::uint32_t kPressureCanId  = 0x300U;
 constexpr std::uint32_t kFlowCanId      = 0x301U;
 
-/*
- * ============================================================
- * Heartbeat Payload
- * ============================================================
- */
+// ============================================================
+// Heartbeat Payload
+// ============================================================
+
 constexpr std::uint8_t kHeartbeatData[] =
 {
-    'I',
-    ' ',
-    'a',
-    'm',
-    ' ',
-    'A',
-    'l',
-    'i',
-    'v',
-    'e'
+    'I',' ','a','m',' ','A','l','i','v','e'
 };
+
+constexpr std::size_t kHeartbeatSize =
+    sizeof(kHeartbeatData);
 
 } // namespace
 
 namespace sensor_node
 {
 
-bool
-CanFd::init()
+// ============================================================
+// INIT
+// ============================================================
+
+bool CanFd::init() noexcept
 {
     return GpioOverlay::canInit();
 }
 
-void
-CanFd::sendHeartbeat()
+// ============================================================
+// HEARTBEAT
+// ============================================================
+
+void CanFd::sendHeartbeat() noexcept
 {
     transmit(
         kHeartbeatCanId,
         kHeartbeatData,
-        sizeof(kHeartbeatData));
+        static_cast<std::uint8_t>(kHeartbeatSize));
 }
 
-void
-CanFd::sendSensorData()
+// ============================================================
+// SENSOR DATA
+// ============================================================
+
+void CanFd::sendSensorData() noexcept
 {
-    /*
-     * --------------------------------------------------------
-     * Pressure Message
-     * CAN ID : 0x300
-     * --------------------------------------------------------
-     */
+    // ---------------- Pressure ----------------
     const std::uint16_t pressure =
         SensorManager::getPressureMmHg();
 
-    std::uint8_t pressure_payload[2];
+    const std::uint8_t pressure_payload[2] =
+    {
+        static_cast<std::uint8_t>(pressure & 0xFFU),
+        static_cast<std::uint8_t>(pressure >> 8U)
+    };
 
-    pressure_payload[0] =
-        static_cast<std::uint8_t>(
-            pressure & 0xFFU);
+    transmit(kPressureCanId,
+             pressure_payload,
+             2U);
 
-    pressure_payload[1] =
-        static_cast<std::uint8_t>(
-            pressure >> 8U);
-
-    transmit(
-        kPressureCanId,
-        pressure_payload,
-        sizeof(pressure_payload));
-
-    /*
-     * --------------------------------------------------------
-     * Flow Message
-     * CAN ID : 0x301
-     * --------------------------------------------------------
-     */
+    // ---------------- Flow ----------------
     const std::uint16_t flow =
         SensorManager::getFlowMlMin();
 
-    std::uint8_t flow_payload[2];
+    const std::uint8_t flow_payload[2] =
+    {
+        static_cast<std::uint8_t>(flow & 0xFFU),
+        static_cast<std::uint8_t>(flow >> 8U)
+    };
 
-    flow_payload[0] =
-        static_cast<std::uint8_t>(
-            flow & 0xFFU);
-
-    flow_payload[1] =
-        static_cast<std::uint8_t>(
-            flow >> 8U);
-
-    transmit(
-        kFlowCanId,
-        flow_payload,
-        sizeof(flow_payload));
+    transmit(kFlowCanId,
+             flow_payload,
+             2U);
 }
 
-void
-CanFd::processReceivedMessage(
-    const std::uint32_t id,
-    const std::uint8_t*,
-    const std::uint8_t)
+// ============================================================
+// RX MESSAGE HANDLER
+// ============================================================
+
+void CanFd::processReceivedMessage(
+    std::uint32_t id,
+    const std::uint8_t* data,
+    std::uint8_t length) noexcept
 {
-    /*
-     * --------------------------------------------------------
-     * Supervisor -> Sensor Node
-     * 0x101
-     * --------------------------------------------------------
-     */
+    if (data == nullptr || length == 0U)
+    {
+        return;
+    }
+
+    // ---------------- E-Stop Command ----------------
     if (id == kEstopCanId)
     {
         LcdDisplay::showMessage(
@@ -129,16 +113,21 @@ CanFd::processReceivedMessage(
     }
 }
 
-void
-CanFd::transmit(
-    const std::uint32_t id,
+// ============================================================
+// TRANSMIT WRAPPER
+// ============================================================
+
+void CanFd::transmit(
+    std::uint32_t id,
     const std::uint8_t* data,
-    const std::uint8_t length)
+    std::uint8_t length) noexcept
 {
-    (void)GpioOverlay::canTransmit(
-        id,
-        data,
-        length);
+    if (data == nullptr || length == 0U)
+    {
+        return;
+    }
+
+    (void)GpioOverlay::canTransmit(id, data, length);
 }
 
 } // namespace sensor_node

@@ -5,34 +5,40 @@
 namespace sensor_node
 {
 
+/**
+ * @brief Sensor aggregation and coordination layer.
+ *
+ * Reads all sensors and provides cached values
+ * for other system modules (LCD, CAN, etc.).
+ */
 class SensorManager
 {
 public:
+
     /**
      * @brief Update all sensor values.
      *
-     * Call periodically (e.g. every 1 second).
+     * Reads hardware sensors and triggers CAN transmission.
      */
-    static void update();
+    static void update() noexcept;
 
     /**
-     * @brief Latest pressure value.
+     * @brief Latest pressure value in mmHg.
      */
-    static std::uint16_t getPressureMmHg();
+    static std::uint16_t getPressureMmHg() noexcept;
 
     /**
-     * @brief Latest flow value.
+     * @brief Latest flow value in mL/min.
      */
-    static std::uint16_t getFlowMlMin();
+    static std::uint16_t getFlowMlMin() noexcept;
 
 private:
     SensorManager() = delete;
 
-    /*
-     * Latest cached values
-     */
-    static std::uint16_t pressure_mmhg_;
-    static std::uint16_t flow_ml_min_;
+private:
+    // Cached sensor values (updated in update())
+    inline static std::uint16_t pressure_mmhg_ = 0U;
+    inline static std::uint16_t flow_ml_min_   = 0U;
 };
 
 } // namespace sensor_node

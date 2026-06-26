@@ -1,3 +1,13 @@
+/*
+ * SPDX-License-Identifier: Apache-2.0
+ *
+ * Sensor Node Application
+ *
+ * Board  : STM32 NUCLEO-G474RE
+ * RTOS   : Zephyr 3.7
+ * Language : C++20
+ */
+
 #include "gpio_overlay.hpp"
 #include "lcd_Display.hpp"
 #include "sensor_manager.hpp"
@@ -10,110 +20,108 @@
 namespace
 {
 
+/*
+ * ============================================================
+ * Application Constants
+ * ============================================================
+ */
+
 constexpr k_timeout_t kSamplePeriod =
     K_SECONDS(1);
+
+/*
+ * ============================================================
+ * Fatal Error Handler
+ * ============================================================
+ */
+
+[[noreturn]]
+void fatalError(
+    const char* const message)
+{
+    printk("%s\r\n", message);
+
+    while (true)
+    {
+        k_sleep(K_SECONDS(1));
+    }
+}
 
 } // namespace
 
 int main()
 {
     /*
-     * --------------------------------------------------------
-     * GPIO / ADC / LCD Hardware
-     * --------------------------------------------------------
+     * ============================================================
+     * Hardware Initialization
+     * ============================================================
      */
-    const bool gpio_ok =
-        sensor_node::GpioOverlay::init();
 
-    if (!gpio_ok)
+    if (!sensor_node::GpioOverlay::init())
     {
-        printk(
-            "GpioOverlay initialization failed\r\n");
-
-        while (true)
-        {
-            k_sleep(K_SECONDS(1));
-        }
+        fatalError(
+            "GpioOverlay initialization failed");
     }
 
     /*
-     * --------------------------------------------------------
-     * LCD
-     * --------------------------------------------------------
+     * ============================================================
+     * LCD Initialization
+     * ============================================================
      */
-    const bool lcd_ok =
-        sensor_node::LcdDisplay::init();
 
-    if (!lcd_ok)
+    if (!sensor_node::LcdDisplay::init())
     {
-        printk(
-            "LCD initialization failed\r\n");
-
-        while (true)
-        {
-            k_sleep(K_SECONDS(1));
-        }
+        fatalError(
+            "LCD initialization failed");
     }
 
     /*
-     * --------------------------------------------------------
-     * CAN-FD
-     * --------------------------------------------------------
+     * ============================================================
+     * CAN Initialization
+     * ============================================================
      */
-    const bool can_ok =
-        sensor_node::CanFd::init();
 
-    if (!can_ok)
+    if (!sensor_node::CanFd::init())
     {
-        printk(
-            "CAN initialization failed\r\n");
-
-        while (true)
-        {
-            k_sleep(K_SECONDS(1));
-        }
+        fatalError(
+            "CAN initialization failed");
     }
 
     /*
-     * --------------------------------------------------------
-     * Heartbeat
-     * --------------------------------------------------------
+     * ============================================================
+     * Heartbeat Initialization
+     * ============================================================
      */
-    const bool heartbeat_ok =
-        sensor_node::Heartbeat::init();
 
-    if (!heartbeat_ok)
+    if (!sensor_node::Heartbeat::init())
     {
-        printk(
-            "Heartbeat initialization failed\r\n");
-
-        while (true)
-        {
-            k_sleep(K_SECONDS(1));
-        }
+        fatalError(
+            "Heartbeat initialization failed");
     }
 
     printk(
         "Sensor Node Started\r\n");
 
+    /*
+     * ============================================================
+     * Main Loop
+     * ============================================================
+     */
+
     while (true)
     {
         /*
-         * Read sensors
-         * Send:
-         *   0x300 Pressure
-         *   0x301 Flow
+         * Read sensors and transmit sensor data.
          */
         sensor_node::SensorManager::update();
 
         /*
-         * Update LCD
+         * Update LCD display.
          */
         sensor_node::LcdDisplay::update();
 
         /*
-         * Send Heartbeat
-         * CAN ID 0x200
+         * Transmit heartbeat message.
          */
         sensor_node::Heartbeat::update();
 

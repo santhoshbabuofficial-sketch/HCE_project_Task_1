@@ -1,29 +1,33 @@
 #pragma once
 
+#include <cstdint>
+
 namespace sensor_node
 {
 
+/**
+ * @brief LCD display controller.
+ *
+ * Handles sensor display and emergency messages.
+ */
 class LcdDisplay
 {
 public:
-    /**
-     * @brief Initialize LCD display.
-     */
-    static bool init();
 
     /**
-     * @brief Update LCD with latest sensor values.
+     * @brief Initialize LCD hardware.
      */
-    static void update();
+    static bool init() noexcept;
 
     /**
-     * @brief Display a custom message.
-     *
-     * Used for supervisor commands such as:
-     * "E Stop Broadcasting"
+     * @brief Update LCD with sensor values.
      */
-    static void showMessage(
-        const char* text);
+    static void update() noexcept;
+
+    /**
+     * @brief Display system message (e.g., E-Stop).
+     */
+    static void showMessage(const char* text) noexcept;
 
 private:
     LcdDisplay() = delete;

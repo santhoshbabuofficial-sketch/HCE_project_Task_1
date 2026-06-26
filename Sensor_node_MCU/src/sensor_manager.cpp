@@ -9,44 +9,39 @@
 namespace sensor_node
 {
 
-std::uint16_t SensorManager::pressure_mmhg_ = 0U;
-std::uint16_t SensorManager::flow_ml_min_ = 0U;
-
-void
-SensorManager::update()
+void SensorManager::update() noexcept
 {
     /*
-     * Step 1:
-     * Read Pressure Sensor
+     * ============================================================
+     * Step 1: Read Pressure Sensor
+     * ============================================================
      */
     pressure_mmhg_ =
         PressureSensor::readPressureMmHg();
 
     /*
-     * Step 2:
-     * Read Flow Sensor
+     * ============================================================
+     * Step 2: Read Flow Sensor
+     * ============================================================
      */
     flow_ml_min_ =
         FlowSensor::readFlowMlMin();
 
     /*
-     * Step 3:
-     * Transmit latest sensor values
-     *
-     * CAN ID 0x300 -> Pressure
-     * CAN ID 0x301 -> Flow
+     * ============================================================
+     * Step 3: Transmit via CAN
+     * (Facade triggers system-wide communication)
+     * ============================================================
      */
     CanFd::sendSensorData();
 }
 
-std::uint16_t
-SensorManager::getPressureMmHg()
+std::uint16_t SensorManager::getPressureMmHg() noexcept
 {
     return pressure_mmhg_;
 }
 
-std::uint16_t
-SensorManager::getFlowMlMin()
+std::uint16_t SensorManager::getFlowMlMin() noexcept
 {
     return flow_ml_min_;
 }

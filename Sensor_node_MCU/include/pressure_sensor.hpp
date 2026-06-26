@@ -6,25 +6,21 @@ namespace sensor_node
 {
 
 /**
- * @brief Pressure sensor conversion class.
+ * @brief Pressure sensor driver (conversion layer).
  *
- * Converts:
- *
- * ADC Count (0-4095)
- *          ↓
- * Pressure (mmHg)
- *
- * Hardware access is performed through GpioOverlay.
+ * Converts raw ADC readings into calibrated pressure (mmHg).
+ * Hardware access is delegated to GpioOverlay.
  */
 class PressureSensor
 {
 public:
+
     /**
-     * @brief Read pressure in mmHg.
+     * @brief Read calibrated pressure.
      *
-     * @return Pressure in mmHg.
+     * @return Pressure in mmHg (0–12001).
      */
-    static std::uint16_t readPressureMmHg();
+    static std::uint16_t readPressureMmHg() noexcept;
 
 private:
     PressureSensor() = delete;

@@ -6,29 +6,21 @@ namespace sensor_node
 {
 
 /**
- * @brief Flow sensor conversion class.
+ * @brief Flow sensor driver (YF-S401).
  *
- * Converts:
- *
- * Pulse Count
- *      ↓
- * Flow Rate (mL/min)
- *
- * Uses YF-S401 calibration.
+ * Converts pulse count into flow rate (mL/min).
+ * Must be called at fixed interval (1 second recommended).
  */
 class FlowSensor
 {
 public:
+
     /**
-     * @brief Read flow rate in mL/min.
-     *
-     * Expected usage:
-     * - Call once every 1 second
-     * - Pulse counter is reset after reading
+     * @brief Compute flow rate.
      *
      * @return Flow rate in mL/min.
      */
-    static std::uint16_t readFlowMlMin();
+    static std::uint16_t readFlowMlMin() noexcept;
 
 private:
     FlowSensor() = delete;

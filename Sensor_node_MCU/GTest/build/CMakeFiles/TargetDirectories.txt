@@ -1,6 +1,0 @@
-/home/babu-inc-5831/Downloads/My_Project/HCE_project_Task_1/Sensor_node_MCU/GTest/build/CMakeFiles/sensor_node_lib.dir
-/home/babu-inc-5831/Downloads/My_Project/HCE_project_Task_1/Sensor_node_MCU/GTest/build/CMakeFiles/sensor_node_tests.dir
-/home/babu-inc-5831/Downloads/My_Project/HCE_project_Task_1/Sensor_node_MCU/GTest/build/CMakeFiles/coverage.dir
-/home/babu-inc-5831/Downloads/My_Project/HCE_project_Task_1/Sensor_node_MCU/GTest/build/CMakeFiles/test.dir
-/home/babu-inc-5831/Downloads/My_Project/HCE_project_Task_1/Sensor_node_MCU/GTest/build/CMakeFiles/edit_cache.dir
-/home/babu-inc-5831/Downloads/My_Project/HCE_project_Task_1/Sensor_node_MCU/GTest/build/CMakeFiles/rebuild_cache.dir

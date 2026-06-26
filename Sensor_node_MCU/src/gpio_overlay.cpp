@@ -1,5 +1,13 @@
-#include "gpio_overlay.hpp"
+/*
+ * SPDX-License-Identifier: Apache-2.0
+ *
+ * gpio_overlay.cpp
+ *
+ * Hardware Abstraction Layer (HAL)
+ * STM32 NUCLEO-G474RE | Zephyr 3.7 | C++20
+ */
 
+#include "gpio_overlay.hpp"
 #include "canfd.hpp"
 
 #include <zephyr/device.h>
@@ -9,204 +17,158 @@
 #include <zephyr/drivers/i2c.h>
 #include <zephyr/kernel.h>
 
+#include <cstdint>
+
 namespace
 {
 
-/*
- * ============================================================
- * ADC Configuration
- * ============================================================
- */
-constexpr std::uint8_t kPressureAdcChannel = 1U;
-constexpr std::uint8_t kAdcResolution = 12U;
+// ============================================================
+// ADC CONFIGURATION (Pressure Sensor)
+// ============================================================
 
-const device* g_adc_dev =
+constexpr std::uint8_t kPressureAdcChannel = 1U;
+constexpr std::uint8_t kAdcResolutionBits  = 12U;
+
+const device* const g_adc_dev =
     DEVICE_DT_GET(DT_NODELABEL(adc1));
 
 std::int16_t g_adc_sample = 0;
 
-adc_channel_cfg g_adc_channel_cfg
+const adc_channel_cfg g_adc_channel_cfg
 {
-    .gain = ADC_GAIN_1,
-    .reference = ADC_REF_INTERNAL,
+    .gain             = ADC_GAIN_1,
+    .reference        = ADC_REF_INTERNAL,
     .acquisition_time = ADC_ACQ_TIME_DEFAULT,
-    .channel_id = kPressureAdcChannel,
+    .channel_id       = kPressureAdcChannel,
 };
 
 adc_sequence g_adc_sequence
 {
-    .channels = BIT(kPressureAdcChannel),
-    .buffer = &g_adc_sample,
+    .channels    = BIT(kPressureAdcChannel),
+    .buffer      = &g_adc_sample,
     .buffer_size = sizeof(g_adc_sample),
-    .resolution = kAdcResolution
+    .resolution  = kAdcResolutionBits
 };
 
-/*
- * ============================================================
- * Flow Sensor
- * PC2
- * ============================================================
- */
+// ============================================================
+// FLOW SENSOR (PC2 Interrupt)
+// ============================================================
+
 const gpio_dt_spec g_flow_gpio =
-    GPIO_DT_SPEC_GET(
-        DT_ALIAS(flow_sensor),
-        gpios);
+    GPIO_DT_SPEC_GET(DT_ALIAS(flow_sensor), gpios);
 
 gpio_callback g_flow_callback;
 
 volatile std::uint32_t g_flow_pulse_count = 0U;
 
 void flowIsr(
-    const device*,
-    gpio_callback*,
-    std::uint32_t)
+    const device* /*dev*/,
+    gpio_callback* /*cb*/,
+    std::uint32_t /*pins*/)
 {
     ++g_flow_pulse_count;
 }
 
-/*
- * ============================================================
- * LCD I2C
- * PB8 -> SCL
- * PB9 -> SDA
- * ============================================================
- */
+// ============================================================
+// LCD (I2C1 - PCF8574)
+// ============================================================
+
 constexpr std::uint16_t kLcdAddress = 0x27U;
 
-constexpr std::uint8_t kRs = 0x01U;
-constexpr std::uint8_t kEn = 0x04U;
-constexpr std::uint8_t kBacklight = 0x08U;
+constexpr std::uint8_t kLcdRs       = 0x01U;
+constexpr std::uint8_t kLcdEn       = 0x04U;
+constexpr std::uint8_t kLcdBacklight = 0x08U;
 
-const device* g_i2c_dev =
+const device* const g_i2c_dev =
     DEVICE_DT_GET(DT_NODELABEL(i2c1));
-    /*
- * ============================================================
- * LCD Low Level Functions
- * ============================================================
- */
 
-bool lcdWriteByte(
-    const std::uint8_t value)
+
+// ------------------------------------------------------------
+// LCD LOW LEVEL HELPERS
+// ------------------------------------------------------------
+
+bool lcdWriteByte(const std::uint8_t value)
 {
-    return i2c_write(
-               g_i2c_dev,
-               &value,
-               1U,
-               kLcdAddress) == 0;
+    return (i2c_write(
+                g_i2c_dev,
+                &value,
+                1U,
+                kLcdAddress) == 0);
 }
 
-void lcdPulseEnable(
-    const std::uint8_t value)
+void lcdPulseEnable(const std::uint8_t value)
 {
-    (void)lcdWriteByte(
-        value | kEn);
-
+    (void)lcdWriteByte(value | kLcdEn);
     k_sleep(K_USEC(1));
-
-    (void)lcdWriteByte(
-        value &
-        static_cast<std::uint8_t>(~kEn));
-
+    (void)lcdWriteByte(value & static_cast<std::uint8_t>(~kLcdEn));
     k_sleep(K_USEC(50));
 }
 
-void lcdWrite4Bits(
-    const std::uint8_t value)
+void lcdWrite4Bits(const std::uint8_t value)
 {
     (void)lcdWriteByte(value);
-
     lcdPulseEnable(value);
 }
 
-void lcdSendByte(
-    const std::uint8_t value,
-    const bool is_data)
+void lcdSendByte(const std::uint8_t value, const bool is_data)
 {
-    const std::uint8_t rs =
-        is_data ? kRs : 0U;
+    const std::uint8_t rs = is_data ? kLcdRs : 0U;
 
-    const std::uint8_t upper =
-        static_cast<std::uint8_t>(
-            value & 0xF0U);
+    const std::uint8_t upper = (value & 0xF0U);
+    const std::uint8_t lower = ((value << 4U) & 0xF0U);
 
-    const std::uint8_t lower =
-        static_cast<std::uint8_t>(
-            (value << 4U) & 0xF0U);
-
-    lcdWrite4Bits(
-        upper |
-        rs |
-        kBacklight);
-
-    lcdWrite4Bits(
-        lower |
-        rs |
-        kBacklight);
+    lcdWrite4Bits(upper | rs | kLcdBacklight);
+    lcdWrite4Bits(lower | rs | kLcdBacklight);
 }
 
-void lcdCommand(
-    const std::uint8_t command)
-{
-    lcdSendByte(
-        command,
-        false);
-}
+// ============================================================
+// CAN DEVICE (FDCAN1)
+// ============================================================
 
-void lcdData(
-    const std::uint8_t data)
-{
-    lcdSendByte(
-        data,
-        true);
-}
-
-/*
- * ============================================================
- * CAN Hardware
- * FDCAN1
- * PA11 -> RX
- * PA12 -> TX
- * ============================================================
- */
-
-const device* g_can_dev =
+const device* const g_can_dev =
     DEVICE_DT_GET(DT_NODELABEL(fdcan1));
 
 constexpr std::uint32_t kEstopCanId = 0x101U;
 
 can_filter g_estop_filter
 {
-    .id = kEstopCanId,
-    .mask = CAN_STD_ID_MASK,
+    .id    = kEstopCanId,
+    .mask  = CAN_STD_ID_MASK,
     .flags = 0U
 };
 
 int g_filter_id = -1;
 
 /*
- * Forward declaration
+ * Forward declaration (implemented in Part 2/3)
  */
 void canRxCallback(
     const device* dev,
     can_frame* frame,
     void* user_data);
-    /*
- * ============================================================
- * CAN RX Callback
- * ============================================================
- */
+
+} // namespace
+namespace
+{
+
+// ============================================================
+// CAN RX CALLBACK
+// ============================================================
 
 void canRxCallback(
-    const device*,
+    const device* /*dev*/,
     can_frame* frame,
-    void*)
+    void* /*user_data*/)
 {
     if (frame == nullptr)
     {
         return;
     }
 
-    CanFd::processReceivedMessage(
+    /*
+     * Forward to application layer
+     */
+    sensor_node::CanFd::processReceivedMessage(
         frame->id,
         frame->data,
         frame->dlc);
@@ -217,40 +179,30 @@ void canRxCallback(
 namespace sensor_node
 {
 
-bool
-GpioOverlay::init()
+// ============================================================
+// INITIALIZATION
+// ============================================================
+
+bool GpioOverlay::init() noexcept
 {
-    /*
-     * ----------------------------
-     * ADC
-     * ----------------------------
-     */
+    // ---------------- ADC ----------------
     if (!device_is_ready(g_adc_dev))
     {
         return false;
     }
 
-    if (adc_channel_setup(
-            g_adc_dev,
-            &g_adc_channel_cfg) != 0)
+    if (adc_channel_setup(g_adc_dev, &g_adc_channel_cfg) != 0)
     {
         return false;
     }
 
-    /*
-     * ----------------------------
-     * Flow Sensor
-     * ----------------------------
-     */
-    if (!gpio_is_ready_dt(
-            &g_flow_gpio))
+    // ---------------- FLOW GPIO ----------------
+    if (!gpio_is_ready_dt(&g_flow_gpio))
     {
         return false;
     }
 
-    if (gpio_pin_configure_dt(
-            &g_flow_gpio,
-            GPIO_INPUT) != 0)
+    if (gpio_pin_configure_dt(&g_flow_gpio, GPIO_INPUT) != 0)
     {
         return false;
     }
@@ -273,35 +225,30 @@ GpioOverlay::init()
 
     return true;
 }
-bool
-GpioOverlay::lcdInit()
+
+// ============================================================
+// LCD INITIALIZATION
+// ============================================================
+
+bool GpioOverlay::lcdInit() noexcept
 {
-    if (!device_is_ready(
-            g_i2c_dev))
+    if (!device_is_ready(g_i2c_dev))
     {
         return false;
     }
 
     k_sleep(K_MSEC(50));
 
-    lcdWrite4Bits(
-        0x30U | kBacklight);
-
+    lcdWrite4Bits(0x30U | kLcdBacklight);
     k_sleep(K_MSEC(5));
 
-    lcdWrite4Bits(
-        0x30U | kBacklight);
-
+    lcdWrite4Bits(0x30U | kLcdBacklight);
     k_sleep(K_MSEC(5));
 
-    lcdWrite4Bits(
-        0x30U | kBacklight);
-
+    lcdWrite4Bits(0x30U | kLcdBacklight);
     k_sleep(K_MSEC(5));
 
-    lcdWrite4Bits(
-        0x20U | kBacklight);
-
+    lcdWrite4Bits(0x20U | kLcdBacklight);
     k_sleep(K_MSEC(5));
 
     lcdCommand(0x28U);
@@ -313,126 +260,128 @@ GpioOverlay::lcdInit()
     return true;
 }
 
-void
-GpioOverlay::lcdClear()
+void GpioOverlay::lcdClear() noexcept
 {
     lcdCommand(0x01U);
-
     k_sleep(K_MSEC(2));
 }
 
-void
-GpioOverlay::lcdSetCursor(
-    const std::uint8_t row,
-    const std::uint8_t col)
+void GpioOverlay::lcdSetCursor(
+    std::uint8_t row,
+    std::uint8_t col) noexcept
 {
     std::uint8_t address = col;
 
     if (row == 1U)
     {
-        address =
-            static_cast<std::uint8_t>(
-                address + 0x40U);
+        address = static_cast<std::uint8_t>(address + 0x40U);
     }
 
-    lcdCommand(
-        static_cast<std::uint8_t>(
-            0x80U | address));
+    lcdCommand(static_cast<std::uint8_t>(0x80U | address));
 }
 
-void
-GpioOverlay::lcdPrint(
-    const char* text)
+void GpioOverlay::lcdPrint(const char* text) noexcept
 {
+    if (text == nullptr)
+    {
+        return;
+    }
+
     while (*text != '\0')
     {
-        lcdData(
-            static_cast<std::uint8_t>(
-                *text));
-
+        lcdSendByte(static_cast<std::uint8_t>(*text), true);
         ++text;
     }
 }
-bool
-GpioOverlay::canInit()
+} 
+namespace sensor_node
 {
-    if (!device_is_ready(
-            g_can_dev))
+
+// ============================================================
+// CAN INITIALIZATION
+// ============================================================
+
+bool GpioOverlay::canInit() noexcept
+{
+    if (!device_is_ready(g_can_dev))
     {
         return false;
     }
 
-    g_filter_id =
-        can_add_rx_filter(
-            g_can_dev,
-            canRxCallback,
-            nullptr,
-            &g_estop_filter);
+    g_filter_id = can_add_rx_filter(
+        g_can_dev,
+        canRxCallback,
+        nullptr,
+        &g_estop_filter);
 
     if (g_filter_id < 0)
     {
         return false;
     }
 
-    return can_start(
-               g_can_dev) == 0;
+    return (can_start(g_can_dev) == 0);
 }
 
-bool
-GpioOverlay::canTransmit(
-    const std::uint32_t id,
+// ============================================================
+// CAN TRANSMIT
+// ============================================================
+
+bool GpioOverlay::canTransmit(
+    std::uint32_t id,
     const std::uint8_t* data,
-    const std::uint8_t length)
+    std::uint8_t length) noexcept
 {
+    if ((data == nullptr) || (length == 0U))
+    {
+        return false;
+    }
+
     can_frame frame {};
 
     frame.id = id;
     frame.dlc = length;
     frame.flags = 0U;
 
-    for (std::uint8_t i = 0U;
-         i < length;
-         ++i)
+    for (std::uint8_t i = 0U; i < length; ++i)
     {
         frame.data[i] = data[i];
     }
 
-    return can_send(
-               g_can_dev,
-               &frame,
-               K_MSEC(10),
-               nullptr,
-               nullptr) == 0;
+    return (can_send(
+                g_can_dev,
+                &frame,
+                K_MSEC(10),
+                nullptr,
+                nullptr) == 0);
 }
 
-std::uint16_t
-GpioOverlay::readPressureAdcRaw()
+// ============================================================
+// ADC READ (PRESSURE SENSOR)
+// ============================================================
+
+std::uint16_t GpioOverlay::readPressureAdcRaw() noexcept
 {
-    if (adc_read(
-            g_adc_dev,
-            &g_adc_sequence) != 0)
+    if (adc_read(g_adc_dev, &g_adc_sequence) != 0)
     {
         return 0U;
     }
 
-    return static_cast<std::uint16_t>(
-        g_adc_sample);
+    return static_cast<std::uint16_t>(g_adc_sample);
 }
 
-std::uint32_t
-GpioOverlay::getFlowPulseCount()
+// ============================================================
+// FLOW SENSOR APIs
+// ============================================================
+
+std::uint32_t GpioOverlay::getFlowPulseCount() noexcept
 {
     return g_flow_pulse_count;
 }
 
-std::uint32_t
-GpioOverlay::getAndResetFlowPulseCount()
+std::uint32_t GpioOverlay::getAndResetFlowPulseCount() noexcept
 {
-    const std::uint32_t count =
-        g_flow_pulse_count;
-
+    const std::uint32_t count = g_flow_pulse_count;
     g_flow_pulse_count = 0U;
-
     return count;
 }
 
