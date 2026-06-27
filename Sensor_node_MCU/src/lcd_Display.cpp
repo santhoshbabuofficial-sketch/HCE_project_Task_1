@@ -11,7 +11,7 @@ namespace
 {
 
 // ============================================================
-// LCD STATE
+// LCD STATE FLAG
 // ============================================================
 
 bool g_estop_active = false;
@@ -28,6 +28,7 @@ bool LcdDisplay::init() noexcept
 
 void LcdDisplay::update() noexcept
 {
+    // If E-STOP active → freeze normal display
     if (g_estop_active)
     {
         return;

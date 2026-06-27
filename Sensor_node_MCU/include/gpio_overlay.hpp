@@ -1,32 +1,3 @@
-/*
- * SPDX-License-Identifier: Apache-2.0
- *
- * gpio_overlay.hpp
- *
- * Hardware Abstraction Layer (HAL)
- * for the Sensor Node.
- *
- * Board:
- *     STM32 NUCLEO-G474RE
- *
- * RTOS:
- *     Zephyr 3.7
- *
- * Language:
- *     C++20
- *
- * Description:
- *     Provides hardware access for:
- *
- *     - ADC Pressure Sensor
- *     - GPIO Flow Sensor
- *     - I2C LCD
- *     - FDCAN
- *
- * This class hides all Zephyr driver APIs from the
- * application layer.
- */
-
 #pragma once
 
 #include <cstdint>
@@ -37,10 +8,8 @@ namespace sensor_node
 /**
  * @brief Hardware abstraction layer.
  *
- * This class owns all low-level hardware access.
- *
- * Higher layers shall never directly access
- * Zephyr GPIO, ADC, I2C or CAN drivers.
+ * Owns all low-level peripheral access:
+ * ADC, GPIO, I2C, CAN.
  */
 class GpioOverlay final
 {
@@ -49,140 +18,83 @@ public:
     /**
      * @brief Initialize all hardware peripherals.
      *
-     * Initializes:
-     * - ADC
-     * - GPIO Interrupt
-     *
-     * @retval true  Initialization successful.
-     * @retval false Initialization failed.
+     * @return true if success, false otherwise
      */
-    [[nodiscard]]
-    static bool init() noexcept;
+    [[nodiscard]] static bool init() noexcept;
 
-    /*==========================================================
-     * Pressure Sensor
-     *==========================================================*/
+    // ============================================================
+    // PRESSURE SENSOR (ADC)
+    // ============================================================
 
     /**
-     * @brief Read raw ADC value.
+     * @brief Read raw ADC value from pressure sensor.
      *
-     * Reads ADC1 Channel 1.
-     *
-     * @return Raw 12-bit ADC value.
+     * @return 12-bit ADC sample value
      */
-    [[nodiscard]]
-    static std::uint16_t
-    readPressureAdcRaw() noexcept;
+    [[nodiscard]] static std::uint16_t readPressureAdcRaw() noexcept;
 
-    /*==========================================================
-     * Flow Sensor
-     *==========================================================*/
+    // ============================================================
+    // FLOW SENSOR (GPIO PULSE)
+    // ============================================================
 
     /**
-     * @brief Get current pulse counter.
+     * @brief Get current flow pulse count.
      *
-     * @return Current pulse count.
+     * @return pulse count
      */
-    [[nodiscard]]
-    static std::uint32_t
-    getFlowPulseCount() noexcept;
+    [[nodiscard]] static std::uint32_t getFlowPulseCount() noexcept;
 
     /**
-     * @brief Get pulse count and reset counter.
+     * @brief Get and reset flow pulse counter.
      *
-     * @return Pulse count since last reset.
+     * @return pulses since last read
      */
-    [[nodiscard]]
-    static std::uint32_t
-    getAndResetFlowPulseCount() noexcept;
+    [[nodiscard]] static std::uint32_t getAndResetFlowPulseCount() noexcept;
 
-    /*==========================================================
-     * LCD
-     *==========================================================*/
+    // ============================================================
+    // LCD (I2C)
+    // ============================================================
 
-    /**
-     * @brief Initialize LCD.
-     *
-     * @retval true Success.
-     * @retval false Failure.
-     */
-    [[nodiscard]]
-    static bool
-    lcdInit() noexcept;
+    static bool lcdInit() noexcept;
+    static void lcdClear() noexcept;
 
-    /**
-     * @brief Clear LCD display.
-     */
-    static void
-    lcdClear() noexcept;
-
-    /**
-     * @brief Set LCD cursor.
-     *
-     * @param row LCD row.
-     * @param col LCD column.
-     */
-    static void
-    lcdSetCursor(
+    static void lcdSetCursor(
         std::uint8_t row,
         std::uint8_t col) noexcept;
 
-    /**
-     * @brief Print string to LCD.
-     *
-     * @param text Null terminated string.
-     */
-    static void
-    lcdPrint(
+    static void lcdPrint(
         const char* text) noexcept;
 
-    /*==========================================================
-     * CAN
-     *==========================================================*/
+    // ============================================================
+    // CAN (FDCAN)
+    // ============================================================
 
-    /**
-     * @brief Initialize CAN controller.
-     *
-     * @retval true Success.
-     * @retval false Failure.
-     */
-    [[nodiscard]]
-    static bool
-    canInit() noexcept;
+    static bool canInit() noexcept;
 
-    /**
-     * @brief Transmit CAN frame.
-     *
-     * @param id CAN Identifier.
-     * @param data Payload pointer.
-     * @param length Payload length.
-     *
-     * @retval true Frame transmitted.
-     * @retval false Transmission failed.
-     */
-    [[nodiscard]]
-    static bool
-    canTransmit(
+    static bool canTransmit(
         std::uint32_t id,
         const std::uint8_t* data,
         std::uint8_t length) noexcept;
+
+    // ============================================================
+    // HEARTBEAT LED (PC4)
+    // ============================================================
+
+    /**
+     * @brief Pulse heartbeat LED (PC4).
+     *
+     * Active HIGH:
+     * ON for 500ms then OFF.
+     */
+    static void heartbeatLedPulse() noexcept;
 
 private:
 
     GpioOverlay() = delete;
     ~GpioOverlay() = delete;
 
-    GpioOverlay(
-        const GpioOverlay&) = delete;
-
-    GpioOverlay& operator=(
-        const GpioOverlay&) = delete;
-
-    GpioOverlay(
-        GpioOverlay&&) = delete;
-
-    GpioOverlay& operator=(
-        GpioOverlay&&) = delete;
+    GpioOverlay(const GpioOverlay&) = delete;
+    GpioOverlay& operator=(const GpioOverlay&) = delete;
 };
 
 } // namespace sensor_node

@@ -25,7 +25,7 @@ public:
     static void update() noexcept;
 
     /**
-     * @brief Display system message (e.g., E-Stop).
+     * @brief Display system message (e.g., E-STOP).
      */
     static void showMessage(const char* text) noexcept;
 

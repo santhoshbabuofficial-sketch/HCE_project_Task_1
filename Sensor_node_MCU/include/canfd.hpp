@@ -11,30 +11,18 @@ namespace sensor_node
  * Handles:
  * - Heartbeat transmission
  * - Sensor data transmission
- * - Supervisor commands (E-Stop)
+ * - Supervisor commands (E-STOP)
  */
 class CanFd
 {
 public:
 
-    /**
-     * @brief Initialize CAN interface.
-     */
     static bool init() noexcept;
 
-    /**
-     * @brief Send heartbeat message.
-     */
     static void sendHeartbeat() noexcept;
 
-    /**
-     * @brief Send sensor data (pressure + flow).
-     */
     static void sendSensorData() noexcept;
 
-    /**
-     * @brief Process received CAN message.
-     */
     static void processReceivedMessage(
         std::uint32_t id,
         const std::uint8_t* data,

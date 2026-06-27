@@ -1,13 +1,3 @@
-/*
- * SPDX-License-Identifier: Apache-2.0
- *
- * Sensor Node Application
- *
- * Board  : STM32 NUCLEO-G474RE
- * RTOS   : Zephyr 3.7
- * Language : C++20
- */
-
 #include "gpio_overlay.hpp"
 #include "lcd_Display.hpp"
 #include "sensor_manager.hpp"
@@ -20,26 +10,12 @@
 namespace
 {
 
-/*
- * ============================================================
- * Application Constants
- * ============================================================
- */
-
-constexpr k_timeout_t kSamplePeriod =
-    K_SECONDS(1);
-
-/*
- * ============================================================
- * Fatal Error Handler
- * ============================================================
- */
+constexpr k_timeout_t kSamplePeriod = K_SECONDS(1);
 
 [[noreturn]]
-void fatalError(
-    const char* const message)
+void fatalError(const char* msg)
 {
-    printk("%s\r\n", message);
+    printk("%s\r\n", msg);
 
     while (true)
     {
@@ -51,82 +27,60 @@ void fatalError(
 
 int main()
 {
-    /*
-     * ============================================================
-     * Hardware Initialization
-     * ============================================================
-     */
+    // ============================================================
+    // GPIO + HAL INIT
+    // ============================================================
 
     if (!sensor_node::GpioOverlay::init())
     {
-        fatalError(
-            "GpioOverlay initialization failed");
+        fatalError("GPIO init failed");
     }
 
-    /*
-     * ============================================================
-     * LCD Initialization
-     * ============================================================
-     */
+    // ============================================================
+    // LCD INIT
+    // ============================================================
 
     if (!sensor_node::LcdDisplay::init())
     {
-        fatalError(
-            "LCD initialization failed");
+        fatalError("LCD init failed");
     }
 
-    /*
-     * ============================================================
-     * CAN Initialization
-     * ============================================================
-     */
+    // ============================================================
+    // CAN INIT
+    // ============================================================
 
     if (!sensor_node::CanFd::init())
     {
-        fatalError(
-            "CAN initialization failed");
+        fatalError("CAN init failed");
     }
 
-    /*
-     * ============================================================
-     * Heartbeat Initialization
-     * ============================================================
-     */
+    // ============================================================
+    // HEARTBEAT INIT
+    // ============================================================
 
     if (!sensor_node::Heartbeat::init())
     {
-        fatalError(
-            "Heartbeat initialization failed");
+        fatalError("Heartbeat init failed");
     }
 
-    printk(
-        "Sensor Node Started\r\n");
+    printk("Sensor Node Started\r\n");
 
-    /*
-     * ============================================================
-     * Main Loop
-     * ============================================================
-     */
+    // ============================================================
+    // MAIN LOOP (1 SECOND CYCLE)
+    // ============================================================
 
     while (true)
     {
-        /*
-         * Read sensors and transmit sensor data.
-         */
+        // SENSOR + CAN TX
         sensor_node::SensorManager::update();
 
-        /*
-         * Update LCD display.
-         */
+        // LCD UPDATE
         sensor_node::LcdDisplay::update();
 
-        /*
-         * Transmit heartbeat message.
-         */
+        // HEARTBEAT + LED PULSE
         sensor_node::Heartbeat::update();
 
-        k_sleep(
-            kSamplePeriod);
+        k_sleep(kSamplePeriod);
     }
 
     return 0;

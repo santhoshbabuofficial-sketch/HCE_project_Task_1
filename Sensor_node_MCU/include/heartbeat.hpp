@@ -6,7 +6,7 @@ namespace sensor_node
 /**
  * @brief System heartbeat module.
  *
- * Sends periodic CAN alive signal.
+ * Sends periodic CAN alive signal and triggers LED pulse.
  */
 class Heartbeat
 {
@@ -18,7 +18,7 @@ public:
     static bool init() noexcept;
 
     /**
-     * @brief Send heartbeat frame.
+     * @brief Send heartbeat frame and trigger LED.
      */
     static void update() noexcept;
 

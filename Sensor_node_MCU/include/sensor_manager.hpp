@@ -36,7 +36,6 @@ private:
     SensorManager() = delete;
 
 private:
-    // Cached sensor values (updated in update())
     inline static std::uint16_t pressure_mmhg_ = 0U;
     inline static std::uint16_t flow_ml_min_   = 0U;
 };

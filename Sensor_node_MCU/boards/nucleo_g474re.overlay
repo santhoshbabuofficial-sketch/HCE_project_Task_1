@@ -1,6 +1,11 @@
 / {
     aliases {
         flow_sensor = &flow_sensor_input;
+        heartbeat_led = &heartbeat_led_pc4;
+    };
+
+    heartbeat_led_pc4: heartbeat_led_pc4 {
+        gpios = <&gpioc 4 GPIO_ACTIVE_HIGH>;
     };
 };
 
@@ -39,11 +44,7 @@ flow_sensor_input: flow_sensor_input {
  * ============================================================
  * LCD DISPLAY
  * I2C1
- *
- * PB8  -> SCL
- * PB9  -> SDA
- *
- * PCF8574 Backpack
+ * PB8 SCL / PB9 SDA
  * ============================================================
  */
 &i2c1 {
@@ -54,11 +55,7 @@ flow_sensor_input: flow_sensor_input {
 /*
  * ============================================================
  * FDCAN1
- *
- * PA11 -> RX
- * PA12 -> TX
- *
- * TJA1051 CAN Transceiver
+ * PA11 RX / PA12 TX
  * ============================================================
  */
 &fdcan1 {
