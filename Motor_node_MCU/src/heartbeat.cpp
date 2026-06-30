@@ -26,7 +26,7 @@ namespace motor_node
 
 void Heartbeat::init()
 {
-    led_state_ = false;
+    led_state_      = false;
     last_toggle_ms_ = k_uptime_get_32();
 
     GpioOverlay::setHeartbeatLed(false);
@@ -59,6 +59,9 @@ void Heartbeat::sendCanHeartbeat()
 /* ============================================================
  * UPDATE LOOP
  * ============================================================
+ * Single definition — includes watchdog timestamp update
+ * for optional safety extension (Rule: no duplicate defs).
+ * ============================================================
  */
 
 void Heartbeat::update()
@@ -69,61 +72,30 @@ void Heartbeat::update()
         last_toggle_ms_ = now;
 
         toggleLed();
-
         sendCanHeartbeat();
     }
 }
 
+} // namespace motor_node
+
 /* ============================================================
- * END PART 1
- * ============================================================
- *//* ============================================================
- * SAFETY EXTENSION (OPTIONAL WATCHDOG HOOK)
+ * SAFETY WATCHDOG TIMESTAMP (file-scope, not private member)
  * ============================================================
  */
 
 namespace
 {
-    static inline std::uint32_t g_last_heartbeat_ms = 0U;
+    static std::uint32_t g_last_heartbeat_ms = 0U;
 }
 
 /**
- * @brief Update internal heartbeat timestamp
+ * @brief Returns true if heartbeat has fired within the last 2 seconds.
+ * @return true if system heartbeat is alive.
  */
-static void update_heartbeat_timestamp()
-{
-    g_last_heartbeat_ms = k_uptime_get_32();
-}
-
-/* ============================================================
- * ENHANCED UPDATE (FINAL VERSION)
- * ============================================================
- */
-
-void Heartbeat::update()
-{
-    const std::uint32_t now = k_uptime_get_32();
-
-    if ((now - last_toggle_ms_) >= kBlinkIntervalMs) {
-        last_toggle_ms_ = now;
-
-        toggleLed();
-        sendCanHeartbeat();
-
-        update_heartbeat_timestamp();
-    }
-}
-
-/* ============================================================
- * SYSTEM HEALTH CHECK (OPTIONAL EXTENSION)
- * ============================================================
- */
-
 bool heartbeat_is_alive()
 {
     const std::uint32_t now = k_uptime_get_32();
 
-    /* If heartbeat hasn't updated for >2 seconds, system is unhealthy */
     constexpr std::uint32_t kTimeoutMs = 2000U;
 
     return ((now - g_last_heartbeat_ms) <= kTimeoutMs);
@@ -132,6 +104,10 @@ bool heartbeat_is_alive()
 /* ============================================================
  * DEBUG INFO
  * ============================================================
+ * led_state_ and last_toggle_ms_ are private members of
+ * Heartbeat — they are not directly accessible here.
+ * Debug logs the watchdog status instead (file-scope data).
+ * ============================================================
  */
 
 #ifdef CONFIG_LOG
@@ -139,12 +115,10 @@ bool heartbeat_is_alive()
 void heartbeat_debug()
 {
     LOG_INF("Heartbeat Debug:");
-    LOG_INF("LED state        : %d", Heartbeat::led_state_);
-    LOG_INF("Last toggle time : %u", Heartbeat::last_toggle_ms_);
-    LOG_INF("Alive status     : %d", heartbeat_is_alive());
+    LOG_INF("Alive status: %d", heartbeat_is_alive());
 }
 
-#endif
+#endif /* CONFIG_LOG */
 
 /* ============================================================
  * END OF FILE

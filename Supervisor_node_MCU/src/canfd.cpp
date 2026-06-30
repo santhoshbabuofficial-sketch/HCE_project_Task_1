@@ -21,6 +21,16 @@ extern volatile std::uint16_t g_pressure_value;
 namespace
 {
     const struct device* can_dev = DEVICE_DT_GET(DT_ALIAS(canbus0));
+
+    /* Zephyr's CAN driver API is filter + callback based; there is no
+     * blocking can_receive(). can_add_rx_filter_msgq() registers an
+     * internal ISR-safe callback that copies matching frames straight
+     * into this fixed-size queue, which ProcessRx() then drains in
+     * thread context. No heap allocation: storage is static. */
+    K_MSGQ_DEFINE(can_rx_msgq,
+                  sizeof(struct can_frame),
+                  CanFd::kRxQueueDepth,
+                  alignof(struct can_frame));
 }
 
 /* ============================================================
@@ -39,6 +49,18 @@ bool CanFd::Init()
         return false;
     }
 
+    /* Route every received standard-ID frame into can_rx_msgq via
+     * Zephyr's built-in ISR-safe filter callback. */
+    struct can_filter filter = {};
+    filter.id   = kAcceptAllId;
+    filter.mask = kAcceptAllMask;
+
+    const int filter_id = can_add_rx_filter_msgq(can_dev, &can_rx_msgq, &filter);
+    if (filter_id < 0)
+    {
+        return false;
+    }
+
     return true;
 }
 
@@ -52,14 +74,12 @@ void CanFd::ProcessRx()
 
     while (true)
     {
-        int ret = can_receive(can_dev, &frame, K_MSEC(10));
+        const int ret = k_msgq_get(&can_rx_msgq, &frame, K_MSEC(kRxPollTimeoutMs));
 
         if (ret == 0)
         {
             DecodeRx(frame.id, frame.data, frame.dlc);
         }
-
-        k_sleep(K_MSEC(1));
     }
 }
 
@@ -134,7 +154,7 @@ void CanFd::DecodeRx(std::uint32_t id,
 }
 
 /* ============================================================
- * TX FUNCTIONS (UNCHANGED)
+ * TX FUNCTIONS
  * ============================================================
  */
 
@@ -145,7 +165,7 @@ void CanFd::SendStartMotor()
     frame.id = kStartMotorId;
     frame.dlc = 0U;
 
-    (void)can_send(can_dev, &frame, K_MSEC(10));
+    (void)can_send(can_dev, &frame, K_MSEC(kTxTimeoutMs), nullptr, nullptr);
 }
 
 void CanFd::SendStopMotor()
@@ -155,7 +175,7 @@ void CanFd::SendStopMotor()
     frame.id = kStopMotorId;
     frame.dlc = 0U;
 
-    (void)can_send(can_dev, &frame, K_MSEC(10));
+    (void)can_send(can_dev, &frame, K_MSEC(kTxTimeoutMs), nullptr, nullptr);
 }
 
 void CanFd::SendEStopBroadcast()
@@ -165,5 +185,5 @@ void CanFd::SendEStopBroadcast()
     frame.id = kEstopId;
     frame.dlc = 0U;
 
-    (void)can_send(can_dev, &frame, K_MSEC(10));
+    (void)can_send(can_dev, &frame, K_MSEC(kTxTimeoutMs), nullptr, nullptr);
 }

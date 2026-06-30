@@ -1,51 +1,54 @@
-/*
- * SPDX-License-Identifier: Apache-2.0
- *
- * Board Overlay : STM32 NUCLEO-G474RE
- * Project       : Motor Node MCU
- * RTOS          : Zephyr 3.7 LTS
- *
- * Hardware Mapping:
- * - FDCAN1 : PA11 (RX), PA12 (TX)
- * - Heartbeat LED : PC4
- * - Stepper Motor (L298N) : PB11-PB14
- */
-
 #include <zephyr/dt-bindings/gpio/gpio.h>
+
+&gpiob {
+    status = "okay";
+};
+
+&gpioc {
+    status = "okay";
+};
 
 / {
     aliases {
         heartbeat-led = &heartbeat_led;
-        stepper-in1 = &stepper_in1;
-        stepper-in2 = &stepper_in2;
-        stepper-in3 = &stepper_in3;
-        stepper-in4 = &stepper_in4;
-        canfd0 = &fdcan1;
+        stepper-in1   = &stepper_in1;
+        stepper-in2   = &stepper_in2;
+        stepper-in3   = &stepper_in3;
+        stepper-in4   = &stepper_in4;
+        canfd0        = &fdcan1;
     };
 
-    heartbeat_led: heartbeat_led {
-        gpios = <&gpioc 4 GPIO_ACTIVE_HIGH>;
-        label = "HEARTBEAT_LED";
+    heartbeat_leds {
+        compatible = "gpio-leds";
+
+        heartbeat_led: heartbeat_led {
+            gpios = <&gpioc 4 GPIO_ACTIVE_HIGH>;
+            label = "HEARTBEAT_LED";
+        };
     };
 
-    stepper_in1: stepper_in1 {
-        gpios = <&gpiob 11 GPIO_ACTIVE_HIGH>;
-        label = "STEPPER_IN1";
-    };
+    stepper_outputs {
+        compatible = "gpio-leds";
 
-    stepper_in2: stepper_in2 {
-        gpios = <&gpiob 12 GPIO_ACTIVE_HIGH>;
-        label = "STEPPER_IN2";
-    };
+        stepper_in1: stepper_in1 {
+            gpios = <&gpiob 11 GPIO_ACTIVE_HIGH>;
+            label = "STEPPER_IN1";
+        };
 
-    stepper_in3: stepper_in3 {
-        gpios = <&gpiob 13 GPIO_ACTIVE_HIGH>;
-        label = "STEPPER_IN3";
-    };
+        stepper_in2: stepper_in2 {
+            gpios = <&gpiob 12 GPIO_ACTIVE_HIGH>;
+            label = "STEPPER_IN2";
+        };
 
-    stepper_in4: stepper_in4 {
-        gpios = <&gpiob 14 GPIO_ACTIVE_HIGH>;
-        label = "STEPPER_IN4";
+        stepper_in3: stepper_in3 {
+            gpios = <&gpiob 13 GPIO_ACTIVE_HIGH>;
+            label = "STEPPER_IN3";
+        };
+
+        stepper_in4: stepper_in4 {
+            gpios = <&gpiob 14 GPIO_ACTIVE_HIGH>;
+            label = "STEPPER_IN4";
+        };
     };
 };
 
@@ -60,5 +63,3 @@
     pinctrl-0 = <&fdcan1_rx_pa11 &fdcan1_tx_pa12>;
     pinctrl-names = "default";
 };
-
-/* End of file */

@@ -28,40 +28,43 @@ namespace motor_node
 class StepperMotorDriver final
 {
 public:
+    /// @brief Deleted: static-only utility class, no instantiation allowed.
     StepperMotorDriver() = delete;
+
+    /// @brief Deleted: static-only utility class.
     ~StepperMotorDriver() = delete;
 
     /**
-     * @brief Initialize motor driver state
+     * @brief Initialize motor driver state.
      */
     static void init();
 
     /**
-     * @brief Start continuous rotation
+     * @brief Start continuous rotation.
      */
     static void start();
 
     /**
-     * @brief Stop motor immediately
+     * @brief Stop motor immediately and de-energize coils.
      */
     static void stop();
 
     /**
-     * @brief Periodic update function (called from main loop)
+     * @brief Periodic update function (called from motor thread).
      */
     static void update();
 
 private:
     /**
-     * @brief Execute next step in sequence
+     * @brief Execute next step in full-step sequence.
      */
     static void step();
 
 private:
-    static inline bool running_ = false;
+    static inline bool          running_    = false;
+    static inline std::uint8_t  step_index_ = 0U;
 
-    static inline std::uint8_t step_index_ = 0U;
-
+    /// @brief Delay between steps in milliseconds (controls rotation speed).
     static constexpr std::uint32_t kStepDelayMs = 10U;
 };
 

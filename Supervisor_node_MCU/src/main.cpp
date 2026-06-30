@@ -4,6 +4,7 @@
 #include "gpio_overlay.hpp"
 #include "canfd.hpp"
 #include "heartbeat_monitoring.hpp"
+#include "alarm.hpp"
 
 LOG_MODULE_REGISTER(supervisor_node, LOG_LEVEL_INF);
 
@@ -18,14 +19,17 @@ static constexpr std::uint16_t kPressureMin_mmHg = 100U;
 static constexpr std::uint16_t kPressureMax_mmHg = 180U;
 
 /* ============================================================
- * SHARED SENSOR DATA (UPDATED VIA CAN RX IN FUTURE EXTENSION)
+ * SHARED SENSOR DATA (UPDATED VIA CAN RX)
  * ============================================================
+ * NOTE: deliberately at TU (external) linkage, not inside an
+ * unnamed namespace. canfd.cpp declares these `extern` and
+ * writes to them from CanFd::DecodeRx() on CAN RX of the
+ * pressure/flow frames; an unnamed namespace would give them
+ * internal linkage and silently create a second, disconnected
+ * copy per translation unit (link-time undefined reference).
  */
-namespace
-{
-    volatile std::uint16_t g_flow_value = 0U;
-    volatile std::uint16_t g_pressure_value = 0U;
-}
+volatile std::uint16_t g_flow_value = 0U;
+volatile std::uint16_t g_pressure_value = 0U;
 
 /* ============================================================
  * THREAD STACKS
@@ -78,6 +82,10 @@ static void SafetyThread()
             LOG_ERR("Safety fault detected -> STOP MOTOR");
 
             CanFd::SendStopMotor();
+
+            /* Out-of-range process value is a safety-critical fault:
+             * latch PC4 ALARM until the next MCU reset. */
+            Alarm::Trigger();
         }
 
         HeartbeatMonitoring::Evaluate();
@@ -96,7 +104,13 @@ static void HeartbeatThread()
 
     while (true)
     {
-        /* Future: LED blink + system alive monitoring */
+        /* If the alarm has latched, PC4 must stay solid ON and must
+         * never be touched again until a hardware reset occurs. */
+        if (!Alarm::IsLatched())
+        {
+            /* Future: LED blink + system alive monitoring */
+        }
+
         k_sleep(K_MSEC(1000));
     }
 }
@@ -113,6 +127,12 @@ int main()
     if (!GpioOverlay::Init())
     {
         LOG_ERR("GPIO Init failed");
+        return -1;
+    }
+
+    if (!Alarm::Init())
+    {
+        LOG_ERR("Alarm Init failed");
         return -1;
     }
 

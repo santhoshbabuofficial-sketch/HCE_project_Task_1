@@ -8,22 +8,34 @@ namespace sensor_node
 /**
  * @brief Flow sensor driver (YF-S401).
  *
- * Converts pulse count into flow rate (mL/min).
- * Must be called at fixed interval (recommended: 1 second).
+ * Converts the pulse count accumulated by the GPIO ISR into a
+ * calibrated flow rate in mL/min.
+ *
+ * Must be called at a fixed 1-second interval to obtain accurate
+ * mL/min readings (pulse count is reset on each call via
+ * GpioOverlay::getAndResetFlowPulseCount()).
+ *
+ * No heap allocation.  All methods are static.
  */
 class FlowSensor
 {
 public:
 
     /**
-     * @brief Read flow rate.
+     * @brief Read and convert the flow rate.
      *
-     * @return Flow rate in mL/min (0–65535 saturated).
+     * Atomically reads and clears the ISR pulse counter, then
+     * applies the YF-S401 calibration factor (98 pulses / L / min).
+     *
+     * @return Flow rate in mL/min, saturated to 65535 on overflow.
      */
-    static std::uint16_t readFlowMlMin() noexcept;
+    [[nodiscard]] static std::uint16_t readFlowMlMin() noexcept;
 
 private:
+
+    /// @cond PRIVATE
     FlowSensor() = delete;
+    /// @endcond
 };
 
 } // namespace sensor_node

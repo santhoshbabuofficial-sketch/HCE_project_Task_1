@@ -51,6 +51,16 @@ public:
      */
     static void SendEStopBroadcast();
 
+    /* ============================================================
+     * RX QUEUE DEPTH (NO MAGIC NUMBERS)
+     * ============================================================
+     * Public because it is needed by the file-scope K_MSGQ_DEFINE()
+     * in canfd.cpp, which must be sized at compile time outside the
+     * class body. Not part of the protocol contract with other
+     * modules — purely an implementation-tuning constant.
+     */
+    static constexpr std::uint16_t kRxQueueDepth = 10U;
+
 private:
     /* ============================================================
      * CAN IDs (NO MAGIC NUMBERS)
@@ -64,6 +74,17 @@ private:
     static constexpr std::uint32_t kMotorHbId    = 0x201U;
     static constexpr std::uint32_t kPressureId    = 0x300U;
     static constexpr std::uint32_t kFlowId        = 0x301U;
+
+    /* ============================================================
+     * RX QUEUE TUNING (NO MAGIC NUMBERS)
+     * ============================================================
+     */
+    static constexpr std::uint32_t kRxPollTimeoutMs = 10U;
+    static constexpr std::uint32_t kTxTimeoutMs     = 10U;
+
+    /* Accept-all filter: zero mask matches every standard CAN ID. */
+    static constexpr std::uint32_t kAcceptAllId   = 0U;
+    static constexpr std::uint32_t kAcceptAllMask = 0U;
 
     /**
      * @brief Internal RX dispatcher

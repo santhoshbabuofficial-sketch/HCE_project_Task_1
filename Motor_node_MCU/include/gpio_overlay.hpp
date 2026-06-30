@@ -22,12 +22,18 @@ namespace motor_node
 
 /**
  * @brief Hardware abstraction wrapper for GPIO and CAN access.
+ *
+ * Static-only utility class. Instantiation is explicitly forbidden
+ * because all members are static (no per-instance state).
  */
 class GpioOverlay final
 {
 public:
-    GpioOverlay() = default;
-    ~GpioOverlay() = default;
+    /// @brief Deleted: static-only utility class, no instantiation allowed.
+    GpioOverlay() = delete;
+
+    /// @brief Deleted: static-only utility class.
+    ~GpioOverlay() = delete;
 
     /**
      * @brief Initialize all GPIO peripherals.

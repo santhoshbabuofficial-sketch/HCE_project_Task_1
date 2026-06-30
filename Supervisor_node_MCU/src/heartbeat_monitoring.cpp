@@ -1,5 +1,6 @@
 #include "heartbeat_monitoring.hpp"
 #include "canfd.hpp"
+#include "alarm.hpp"
 
 #include <zephyr/kernel.h>
 
@@ -56,6 +57,10 @@ void HeartbeatMonitoring::TriggerEStop()
     estop_triggered_ = true;
 
     CanFd::SendEStopBroadcast();
+
+    /* Heartbeat failure is a safety-critical fault: latch PC4 ALARM
+     * until the next MCU reset (NRST button). */
+    Alarm::Trigger();
 }
 
 /* ============================================================

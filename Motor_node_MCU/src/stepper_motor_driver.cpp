@@ -48,13 +48,21 @@ static constexpr bool kStepSequence[4][4] =
 static bool g_initialized = false;
 
 /* ============================================================
+ * SAFETY WATCHDOG TIMESTAMP
+ * ============================================================
+ * Tracks last step time for future idle-protection extension.
+ */
+
+static std::uint32_t g_last_step_time_ms = 0U;
+
+/* ============================================================
  * INIT
  * ============================================================
  */
 
 void StepperMotorDriver::init()
 {
-    running_ = false;
+    running_    = false;
     step_index_ = 0U;
 
     g_initialized = true;
@@ -87,7 +95,7 @@ void StepperMotorDriver::stop()
 {
     running_ = false;
 
-    /* Immediately disable coils */
+    /* Immediately de-energize all coils */
     GpioOverlay::setStepperPins(false, false, false, false);
 
     LOG_INF("Stepper motor STOP");
@@ -96,6 +104,9 @@ void StepperMotorDriver::stop()
 /* ============================================================
  * STEP EXECUTION
  * ============================================================
+ * Single definition — includes timestamp update for the
+ * optional safety watchdog extension (Rule: no duplicate defs).
+ * ============================================================
  */
 
 void StepperMotorDriver::step()
@@ -109,12 +120,17 @@ void StepperMotorDriver::step()
         pattern[3]
     );
 
-    step_index_ = (step_index_ + 1U) & 0x03U;
+    step_index_ = static_cast<std::uint8_t>((step_index_ + 1U) & 0x03U);
+
+    /* Update watchdog timestamp */
+    g_last_step_time_ms = k_uptime_get_32();
 }
 
 /* ============================================================
  * UPDATE LOOP
  * ============================================================
+ * Single definition — called from motor thread.
+ * ============================================================
  */
 
 void StepperMotorDriver::update()
@@ -128,89 +144,27 @@ void StepperMotorDriver::update()
     k_msleep(kStepDelayMs);
 }
 
-/* ============================================================
- * END PART 1
- * ============================================================
- */
-/* ============================================================
- * TIMING & SAFETY EXTENSIONS
- * ============================================================
- */
-
-namespace
-{
-    /**
-     * @brief Safety watchdog flag (future extension hook)
-     *
-     * If motor is left running too long without CAN refresh,
-     * this can be used to auto-stop (not enabled yet).
-     */
-    static inline std::uint32_t g_last_step_time_ms = 0U;
-}
+} // namespace motor_node
 
 /* ============================================================
- * TIMESTAMP UPDATE HOOK (OPTIONAL)
- * ============================================================
- */
-
-static void update_timestamp()
-{
-    g_last_step_time_ms = k_uptime_get_32();
-}
-
-/* ============================================================
- * EXTENDED STEP FUNCTION (SAFE VERSION HOOK)
- * ============================================================
- */
-
-void StepperMotorDriver::step()
-{
-    const bool *pattern = kStepSequence[step_index_];
-
-    GpioOverlay::setStepperPins(
-        pattern[0],
-        pattern[1],
-        pattern[2],
-        pattern[3]
-    );
-
-    step_index_ = (step_index_ + 1U) & 0x03U;
-
-    update_timestamp();
-}
-
-/* ============================================================
- * IDLE PROTECTION (OPTIONAL SAFETY FEATURE)
- * ============================================================
- */
-
-void StepperMotorDriver::update()
-{
-    if (!running_) {
-        return;
-    }
-
-    /* Execute one step */
-    step();
-
-    /* Delay controls speed */
-    k_msleep(kStepDelayMs);
-}
-
-/* ============================================================
- * EMERGENCY STOP HOOK (FUTURE CAN FAULT USE)
+ * EMERGENCY STOP HOOK (C linkage, for CAN fault path)
  * ============================================================
  */
 
 void stepper_motor_emergency_stop()
 {
-    StepperMotorDriver::stop();
+    motor_node::StepperMotorDriver::stop();
 
-    GpioOverlay::setStepperPins(false, false, false, false);
+    /* Redundant coil de-energize for safety */
+    motor_node::GpioOverlay::setStepperPins(false, false, false, false);
 }
 
 /* ============================================================
  * DEBUG HELPERS
+ * ============================================================
+ * Note: running_ and step_index_ are private; debug info is
+ * logged inside the class methods. External debug only reports
+ * the initialized flag (which is file-scope, not private).
  * ============================================================
  */
 
@@ -218,12 +172,10 @@ void stepper_motor_emergency_stop()
 
 void stepper_motor_debug()
 {
-    LOG_INF("Stepper Motor Debug:");
-    LOG_INF("Running state: %d", StepperMotorDriver::running_);
-    LOG_INF("Step index   : %u", StepperMotorDriver::step_index_);
+    LOG_INF("Stepper Motor Debug: (detailed state visible in init/start/stop logs)");
 }
 
-#endif
+#endif /* CONFIG_LOG */
 
 /* ============================================================
  * END OF FILE

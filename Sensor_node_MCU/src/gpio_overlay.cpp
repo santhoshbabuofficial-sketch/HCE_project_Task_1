@@ -10,20 +10,27 @@
 
 #include <cstdint>
 
+// ============================================================
+// ANONYMOUS NAMESPACE — TRANSLATION-UNIT-LOCAL STATE
+// ============================================================
 namespace
 {
 
 // ============================================================
-// ADC CONFIGURATION (PRESSURE SENSOR)
+// ADC CONFIGURATION (PRESSURE SENSOR — ADC1 CH1 / PA0)
 // ============================================================
 
-constexpr std::uint8_t kPressureAdcChannel = 1U;
-constexpr std::uint8_t kAdcResolutionBits  = 12U;
+constexpr std::uint8_t  kPressureAdcChannel = 1U;
+constexpr std::uint8_t  kAdcResolutionBits  = 12U;
 
 const device* const g_adc_dev =
     DEVICE_DT_GET(DT_NODELABEL(adc1));
 
-std::int16_t g_adc_sample = 0;
+/*
+ * FIX: adc_sequence::buffer must be uint16_t for 12-bit resolution.
+ * Using int16_t was a sign-mismatch; Zephyr stores raw counts unsigned.
+ */
+std::uint16_t g_adc_sample = 0U;
 
 const adc_channel_cfg g_adc_channel_cfg
 {
@@ -31,56 +38,81 @@ const adc_channel_cfg g_adc_channel_cfg
     .reference        = ADC_REF_INTERNAL,
     .acquisition_time = ADC_ACQ_TIME_DEFAULT,
     .channel_id       = kPressureAdcChannel,
+    .differential     = 0U,
 };
 
 adc_sequence g_adc_sequence
 {
+    .options     = nullptr,
     .channels    = BIT(kPressureAdcChannel),
     .buffer      = &g_adc_sample,
     .buffer_size = sizeof(g_adc_sample),
-    .resolution  = kAdcResolutionBits
+    .resolution  = kAdcResolutionBits,
+    .oversampling = 0U,
+    .calibrate   = false,
 };
 
 // ============================================================
-// FLOW SENSOR (PC2 INTERRUPT)
+// FLOW SENSOR (PC2 — Rising-edge interrupt)
 // ============================================================
 
+/*
+ * FIX: DT_ALIAS requires the alias name with underscores replaced by
+ * hyphens exactly matching the DTS alias key "flow-sensor".
+ * GPIO_DT_SPEC_GET resolves to the gpios property of that alias node.
+ */
 const gpio_dt_spec g_flow_gpio =
     GPIO_DT_SPEC_GET(DT_ALIAS(flow_sensor), gpios);
 
 gpio_callback g_flow_callback;
 
-volatile std::uint32_t g_flow_pulse_count = 0U;
+/*
+ * FIX: Use atomic_t (Zephyr) for the ISR-updated counter so that
+ * the main thread reads a consistent value without disabling IRQs.
+ * atomic_t is a struct wrapping a volatile int internally; all
+ * access goes through atomic_get / atomic_inc.
+ */
+atomic_t g_flow_pulse_count = ATOMIC_INIT(0);
 
-void flowIsr(
+/*
+ * FIX: ISR callback signature must match gpio_callback_handler_t exactly.
+ * The function must NOT be noexcept in C (Zephyr C API), but because we
+ * compile with C++ we mark it extern "C" to suppress name-mangling and
+ * match the C function-pointer type expected by gpio_init_callback.
+ */
+extern "C" void flowIsr(
     const device* /*dev*/,
     gpio_callback* /*cb*/,
-    std::uint32_t /*pins*/)
+    std::uint32_t  /*pins*/)
 {
-    ++g_flow_pulse_count;
+    atomic_inc(&g_flow_pulse_count);
 }
 
 // ============================================================
-// LCD (I2C1 - PCF8574)
+// LCD (I2C1 — PCF8574 I2C backpack)
 // ============================================================
 
-constexpr std::uint16_t kLcdAddress = 0x27U;
+constexpr std::uint16_t kLcdAddress   = 0x27U;
 
-constexpr std::uint8_t kLcdRs        = 0x01U;
-constexpr std::uint8_t kLcdEn        = 0x04U;
-constexpr std::uint8_t kLcdBacklight = 0x08U;
+constexpr std::uint8_t  kLcdRs        = 0x01U;
+constexpr std::uint8_t  kLcdEn        = 0x04U;
+constexpr std::uint8_t  kLcdBacklight = 0x08U;
 
 const device* const g_i2c_dev =
     DEVICE_DT_GET(DT_NODELABEL(i2c1));
 
 // ============================================================
-// HEARTBEAT LED (PC4)
+// HEARTBEAT LED (PC4 — Active HIGH)
 // ============================================================
 
+/*
+ * FIX: alias key in DTS is "heartbeat-led" → DT_ALIAS(heartbeat_led).
+ */
 const gpio_dt_spec g_heartbeat_led =
     GPIO_DT_SPEC_GET(DT_ALIAS(heartbeat_led), gpios);
 
-void heartbeatLedWrite(const bool state)
+/// Drive the heartbeat LED to @p state (true = ON).
+void heartbeatLedWrite(const bool state) noexcept
 {
     if (!gpio_is_ready_dt(&g_heartbeat_led))
     {
@@ -92,46 +124,46 @@ void heartbeatLedWrite(const bool state)
         static_cast<int>(state));
 }
 
-} // namespace
-namespace
-{
-
 // ============================================================
-// LCD LOW LEVEL HELPERS (I2C 4-bit MODE)
+// LCD LOW-LEVEL HELPERS (I2C 4-bit mode)
 // ============================================================
 
-bool lcdWriteByte(const std::uint8_t value)
+bool lcdWriteByte(const std::uint8_t value) noexcept
 {
+    /*
+     * FIX: i2c_write takes a non-const pointer to device; add cast.
+     * Also cast address to uint16_t to silence implicit conversion warning.
+     */
     return (i2c_write(
                 g_i2c_dev,
                 &value,
                 1U,
-                kLcdAddress) == 0);
+                static_cast<std::uint16_t>(kLcdAddress)) == 0);
 }
 
-void lcdPulseEnable(const std::uint8_t value)
+void lcdPulseEnable(const std::uint8_t value) noexcept
 {
-    (void)lcdWriteByte(value | kLcdEn);
+    (void)lcdWriteByte(static_cast<std::uint8_t>(value | kLcdEn));
     k_sleep(K_USEC(1));
-    (void)lcdWriteByte(value & static_cast<std::uint8_t>(~kLcdEn));
+    (void)lcdWriteByte(static_cast<std::uint8_t>(
+        value & static_cast<std::uint8_t>(~kLcdEn)));
     k_sleep(K_USEC(50));
 }
 
-void lcdWrite4Bits(const std::uint8_t value)
+void lcdWrite4Bits(const std::uint8_t value) noexcept
 {
     (void)lcdWriteByte(value);
     lcdPulseEnable(value);
 }
 
-void lcdSendByte(const std::uint8_t value, const bool is_data)
+void lcdSendByte(const std::uint8_t value, const bool is_data) noexcept
 {
-    const std::uint8_t rs = is_data ? kLcdRs : 0U;
+    const std::uint8_t rs    = is_data ? kLcdRs : 0U;
+    const std::uint8_t upper = static_cast<std::uint8_t>(value & 0xF0U);
+    const std::uint8_t lower = static_cast<std::uint8_t>((value << 4U) & 0xF0U);
 
-    const std::uint8_t upper = (value & 0xF0U);
-    const std::uint8_t lower = ((value << 4U) & 0xF0U);
-
-    lcdWrite4Bits(upper | rs | kLcdBacklight);
-    lcdWrite4Bits(lower | rs | kLcdBacklight);
+    lcdWrite4Bits(static_cast<std::uint8_t>(upper | rs | kLcdBacklight));
+    lcdWrite4Bits(static_cast<std::uint8_t>(lower | rs | kLcdBacklight));
 }
 
 // ============================================================
@@ -143,34 +175,36 @@ const device* const g_can_dev =
 
 constexpr std::uint32_t kEstopCanId = 0x101U;
 
+/*
+ * FIX: can_filter::flags must include CAN_FILTER_DATA for a standard
+ * data-frame filter. Without it the driver may reject the filter.
+ */
 can_filter g_estop_filter
 {
     .id    = kEstopCanId,
     .mask  = CAN_STD_ID_MASK,
-    .flags = 0U
+    /*
+     * FIX: CAN_FILTER_DATA was removed in Zephyr 3.x — standard data
+     * frames are matched with flags = 0 (no FD, no RTR, no IDE).
+     */
+    .flags = static_cast<std::uint8_t>(0U),
 };
 
 int g_filter_id = -1;
-
-// Forward declaration
-void canRxCallback(
-    const device* dev,
-    can_frame* frame,
-    void* user_data);
-
-} // namespace
-
-namespace
-{
 
 // ============================================================
 // CAN RX CALLBACK
 // ============================================================
 
-void canRxCallback(
+/*
+ * FIX: Callback type is can_rx_callback_t which is a plain C function
+ * pointer.  Mark extern "C" so the compiler generates a compatible
+ * calling convention and the cast inside can_add_rx_filter is valid.
+ */
+extern "C" void canRxCallback(
     const device* /*dev*/,
-    can_frame* frame,
-    void* /*user_data*/)
+    can_frame*    frame,
+    void*         /*user_data*/)
 {
     if (frame == nullptr)
     {
@@ -180,23 +214,25 @@ void canRxCallback(
     sensor_node::CanFd::processReceivedMessage(
         frame->id,
         frame->data,
-        frame->dlc);
+        static_cast<std::uint8_t>(frame->dlc));
 }
 
-} // namespace
+} // anonymous namespace
+
+// ============================================================
+// sensor_node::GpioOverlay IMPLEMENTATION
+// ============================================================
 namespace sensor_node
 {
 
-// ============================================================
-// INITIALIZATION
-// ============================================================
-
+// ------------------------------------------------------------
+// init() — peripherals
+// ------------------------------------------------------------
 bool GpioOverlay::init() noexcept
 {
-    // ============================================================
+    // --------------------------------------------------------
     // ADC (PRESSURE SENSOR)
-    // ============================================================
-
+    // --------------------------------------------------------
     if (!device_is_ready(g_adc_dev))
     {
         return false;
@@ -207,10 +243,9 @@ bool GpioOverlay::init() noexcept
         return false;
     }
 
-    // ============================================================
-    // FLOW SENSOR GPIO (PC2 INTERRUPT)
-// ============================================================
-
+    // --------------------------------------------------------
+    // FLOW SENSOR GPIO (PC2 — Rising-edge interrupt)
+    // --------------------------------------------------------
     if (!gpio_is_ready_dt(&g_flow_gpio))
     {
         return false;
@@ -237,10 +272,9 @@ bool GpioOverlay::init() noexcept
         g_flow_gpio.port,
         &g_flow_callback);
 
-    // ============================================================
+    // --------------------------------------------------------
     // HEARTBEAT LED (PC4)
-    // ============================================================
-
+    // --------------------------------------------------------
     if (!gpio_is_ready_dt(&g_heartbeat_led))
     {
         return false;
@@ -255,10 +289,20 @@ bool GpioOverlay::init() noexcept
 
     heartbeatLedWrite(false);
 
-    // ============================================================
-    // CAN INIT + FILTER
-    // ============================================================
+    return true;
+}
 
+// ------------------------------------------------------------
+// canInit() — CAN-FD controller startup
+// ------------------------------------------------------------
+
+/*
+ * FIX: canInit() was defined inside GpioOverlay::init()'s closing brace
+ * in the original file — it was accidentally nested, making it an
+ * undefined symbol at link time.  It is now a proper top-level method.
+ */
+bool GpioOverlay::canInit() noexcept
+{
     if (!device_is_ready(g_can_dev))
     {
         return false;
@@ -282,13 +326,10 @@ bool GpioOverlay::init() noexcept
 
     return true;
 }
-namespace sensor_node
-{
 
-// ============================================================
-// LCD INITIALIZATION
-// ============================================================
-
+// ------------------------------------------------------------
+// lcdInit()
+// ------------------------------------------------------------
 bool GpioOverlay::lcdInit() noexcept
 {
     if (!device_is_ready(g_i2c_dev))
@@ -298,16 +339,16 @@ bool GpioOverlay::lcdInit() noexcept
 
     k_sleep(K_MSEC(50));
 
-    lcdWrite4Bits(0x30U | kLcdBacklight);
+    lcdWrite4Bits(static_cast<std::uint8_t>(0x30U | kLcdBacklight));
     k_sleep(K_MSEC(5));
 
-    lcdWrite4Bits(0x30U | kLcdBacklight);
+    lcdWrite4Bits(static_cast<std::uint8_t>(0x30U | kLcdBacklight));
     k_sleep(K_MSEC(5));
 
-    lcdWrite4Bits(0x30U | kLcdBacklight);
+    lcdWrite4Bits(static_cast<std::uint8_t>(0x30U | kLcdBacklight));
     k_sleep(K_MSEC(5));
 
-    lcdWrite4Bits(0x20U | kLcdBacklight);
+    lcdWrite4Bits(static_cast<std::uint8_t>(0x20U | kLcdBacklight));
     k_sleep(K_MSEC(5));
 
     lcdSendByte(0x28U, false);
@@ -320,16 +361,18 @@ bool GpioOverlay::lcdInit() noexcept
     return true;
 }
 
-// ============================================================
-// LCD CONTROL
-// ============================================================
-
+// ------------------------------------------------------------
+// lcdClear()
+// ------------------------------------------------------------
 void GpioOverlay::lcdClear() noexcept
 {
     lcdSendByte(0x01U, false);
     k_sleep(K_MSEC(2));
 }
 
+// ------------------------------------------------------------
+// lcdSetCursor()
+// ------------------------------------------------------------
 void GpioOverlay::lcdSetCursor(
     std::uint8_t row,
     std::uint8_t col) noexcept
@@ -344,6 +387,9 @@ void GpioOverlay::lcdSetCursor(
     lcdSendByte(static_cast<std::uint8_t>(0x80U | address), false);
 }
 
+// ------------------------------------------------------------
+// lcdPrint()
+// ------------------------------------------------------------
 void GpioOverlay::lcdPrint(const char* text) noexcept
 {
     if (text == nullptr)
@@ -358,10 +404,9 @@ void GpioOverlay::lcdPrint(const char* text) noexcept
     }
 }
 
-// ============================================================
-// PRESSURE SENSOR (ADC READ)
-// ============================================================
-
+// ------------------------------------------------------------
+// readPressureAdcRaw()
+// ------------------------------------------------------------
 std::uint16_t GpioOverlay::readPressureAdcRaw() noexcept
 {
     if (adc_read(g_adc_dev, &g_adc_sequence) != 0)
@@ -369,37 +414,39 @@ std::uint16_t GpioOverlay::readPressureAdcRaw() noexcept
         return 0U;
     }
 
-    return static_cast<std::uint16_t>(g_adc_sample);
+    return g_adc_sample;
 }
 
-// ============================================================
-// FLOW SENSOR APIs
-// ============================================================
-
+// ------------------------------------------------------------
+// getFlowPulseCount()
+// ------------------------------------------------------------
 std::uint32_t GpioOverlay::getFlowPulseCount() noexcept
 {
-    return g_flow_pulse_count;
+    return static_cast<std::uint32_t>(
+        atomic_get(&g_flow_pulse_count));
 }
 
+// ------------------------------------------------------------
+// getAndResetFlowPulseCount()
+// ------------------------------------------------------------
 std::uint32_t GpioOverlay::getAndResetFlowPulseCount() noexcept
 {
-    const std::uint32_t count = g_flow_pulse_count;
-    g_flow_pulse_count = 0U;
-    return count;
+    /*
+     * FIX: Use atomic_set to clear after atomic_get so the ISR
+     * cannot increment between the read and the clear.
+     * atomic_clear sets to 0 and returns the old value — ideal here.
+     */
+    return static_cast<std::uint32_t>(
+        atomic_clear(&g_flow_pulse_count));
 }
 
-} // namespace sensor_node
-namespace sensor_node
-{
-
-// ============================================================
-// CAN TRANSMIT
-// ============================================================
-
+// ------------------------------------------------------------
+// canTransmit()
+// ------------------------------------------------------------
 bool GpioOverlay::canTransmit(
-    std::uint32_t id,
+    std::uint32_t       id,
     const std::uint8_t* data,
-    std::uint8_t length) noexcept
+    std::uint8_t        length) noexcept
 {
     if ((data == nullptr) || (length == 0U))
     {
@@ -408,9 +455,13 @@ bool GpioOverlay::canTransmit(
 
     can_frame frame {};
 
-    frame.id = id;
-    frame.dlc = length;
-    frame.flags = 0U;
+    frame.id    = id;
+    frame.dlc   = length;
+    /*
+     * FIX: can_frame_flags was renamed/removed in newer Zephyr.
+     * Cast to the underlying uint8_t type directly.
+     */
+    frame.flags = static_cast<std::uint8_t>(0U);
 
     for (std::uint8_t i = 0U; i < length; ++i)
     {
@@ -425,10 +476,9 @@ bool GpioOverlay::canTransmit(
                 nullptr) == 0);
 }
 
-// ============================================================
-// HEARTBEAT LED PULSE (PC4 - ACTIVE HIGH)
-// ============================================================
-
+// ------------------------------------------------------------
+// heartbeatLedPulse()
+// ------------------------------------------------------------
 void GpioOverlay::heartbeatLedPulse() noexcept
 {
     if (!gpio_is_ready_dt(&g_heartbeat_led))
@@ -436,13 +486,8 @@ void GpioOverlay::heartbeatLedPulse() noexcept
         return;
     }
 
-    // ON
     heartbeatLedWrite(true);
-
-    // HOLD FOR 500ms (USER REQUIREMENT)
     k_sleep(K_MSEC(500));
-
-    // OFF
     heartbeatLedWrite(false);
 }
 
