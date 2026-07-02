@@ -51,8 +51,8 @@
 	status = "okay";
 	pinctrl-0 = <&fdcan1_rx_pa11 &fdcan1_tx_pa12>;
 	pinctrl-names = "default";
-	bus-speed = <1000000>;
-	bus-speed-data = <4000000>;
+	bitrate = <1000000>;
+	bitrate-data = <4000000>;
 };
 
 / {
