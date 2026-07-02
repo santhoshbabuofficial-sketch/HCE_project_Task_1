@@ -1,4 +1,0 @@
--- west build: generating a build system
-CMake Error: Unknown argument --verbose
-CMake Error: Run 'cmake --help' for all supported options.
-FATAL ERROR: command exited with status 1: /usr/bin/cmake -DWEST_PYTHON=/home/babu-inc-5831/snap/code/247/.local/share/pipx/venvs/west/bin/python -B/home/babu-inc-5831/Downloads/My_Project/HCE_Task_1/Sensor_node_MCU/build -GNinja --verbose -S/home/babu-inc-5831/Downloads/My_Project/HCE_Task_1/Sensor_node_MCU
