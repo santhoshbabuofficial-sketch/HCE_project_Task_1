@@ -1,0 +1,50 @@
+/*
+ * Motor Node device tree overlay.
+ * Binds: TMC2209 STEP/DIR/ENABLE GPIOs, FDCAN1 (CAN bus), PC4 heartbeat LED.
+ *
+ * Application code SHALL NEVER reference these nodes directly; only
+ * gpio_overlay.cpp is permitted to consume DT_ALIAS()/DT_NODELABEL()
+ * macros generated from this file.
+ */
+
+&fdcan1 {
+	status = "okay";
+	pinctrl-0 = <&fdcan1_rx_pa11 &fdcan1_tx_pa12>;
+	pinctrl-names = "default";
+	bus-speed = <1000000>;
+	bus-speed-data = <4000000>;
+};
+
+/ {
+	motor_leds {
+		compatible = "gpio-leds";
+		heartbeat_led: heartbeat_led_pc4 {
+			gpios = <&gpioc 4 GPIO_ACTIVE_HIGH>;
+			label = "HEARTBEAT_LED";
+		};
+	};
+
+	motor_stepper_gpios {
+		compatible = "gpio-leds";
+		stepper_step: stepper_step_pb11 {
+			gpios = <&gpiob 11 GPIO_ACTIVE_HIGH>;
+			label = "STEPPER_STEP";
+		};
+		stepper_dir: stepper_dir_pb12 {
+			gpios = <&gpiob 12 GPIO_ACTIVE_HIGH>;
+			label = "STEPPER_DIR";
+		};
+		stepper_enable: stepper_enable_pb13 {
+			gpios = <&gpiob 13 GPIO_ACTIVE_LOW>;
+			label = "STEPPER_ENABLE";
+		};
+	};
+
+	aliases {
+		heartbeat-led = &heartbeat_led;
+		stepper-step = &stepper_step;
+		stepper-dir = &stepper_dir;
+		stepper-enable = &stepper_enable;
+		can-bus = &fdcan1;
+	};
+};

@@ -1,0 +1,74 @@
+/*
+ * Sensor Node device tree overlay.
+ * Binds: I2C1 (LCD), I2C2 (pressure LPS22HB), I2C3 (flow PAV3015),
+ * FDCAN1 (CAN bus), PC4 heartbeat LED.
+ *
+ * Application code SHALL NEVER reference these nodes directly; only
+ * gpio_overlay.cpp is permitted to consume DT_ALIAS()/DT_NODELABEL()
+ * macros generated from this file.
+ */
+
+&i2c1 {
+	status = "okay";
+	pinctrl-0 = <&i2c1_scl_pb8 &i2c1_sda_pb9>;
+	pinctrl-names = "default";
+	clock-frequency = <I2C_BITRATE_STANDARD>;
+
+	lcd_pcf8574: pcf8574@27 {
+		compatible = "i2c-device";
+		reg = <0x27>;
+		label = "LCD_PCF8574";
+	};
+};
+
+&i2c2 {
+	status = "okay";
+	pinctrl-0 = <&i2c2_scl_pa9 &i2c2_sda_pa8>;
+	pinctrl-names = "default";
+	clock-frequency = <I2C_BITRATE_STANDARD>;
+
+	pressure_lps22hb: lps22hb@5c {
+		compatible = "i2c-device";
+		reg = <0x5c>;
+		label = "PRESSURE_LPS22HB";
+	};
+};
+
+&i2c3 {
+	status = "okay";
+	pinctrl-0 = <&i2c3_scl_pc8 &i2c3_sda_pc9>;
+	pinctrl-names = "default";
+	clock-frequency = <I2C_BITRATE_STANDARD>;
+
+	flow_pav3015: pav3015@40 {
+		compatible = "i2c-device";
+		reg = <0x40>;
+		label = "FLOW_PAV3015";
+	};
+};
+
+&fdcan1 {
+	status = "okay";
+	pinctrl-0 = <&fdcan1_rx_pa11 &fdcan1_tx_pa12>;
+	pinctrl-names = "default";
+	bus-speed = <1000000>;
+	bus-speed-data = <4000000>;
+};
+
+/ {
+	sensor_leds {
+		compatible = "gpio-leds";
+		heartbeat_led: heartbeat_led_pc4 {
+			gpios = <&gpioc 4 GPIO_ACTIVE_HIGH>;
+			label = "HEARTBEAT_LED";
+		};
+	};
+
+	aliases {
+		heartbeat-led = &heartbeat_led;
+		pressure-sensor = &pressure_lps22hb;
+		flow-sensor = &flow_pav3015;
+		lcd-display = &lcd_pcf8574;
+		can-bus = &fdcan1;
+	};
+};

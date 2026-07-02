@@ -26,10 +26,9 @@ const struct device *GpioOverlay::can_dev_ = nullptr;
 
 gpio_dt_spec GpioOverlay::heartbeat_led_ = GPIO_DT_SPEC_GET(DT_ALIAS(heartbeat_led), gpios);
 
-gpio_dt_spec GpioOverlay::stepper_in1_ = GPIO_DT_SPEC_GET(DT_ALIAS(stepper_in1), gpios);
-gpio_dt_spec GpioOverlay::stepper_in2_ = GPIO_DT_SPEC_GET(DT_ALIAS(stepper_in2), gpios);
-gpio_dt_spec GpioOverlay::stepper_in3_ = GPIO_DT_SPEC_GET(DT_ALIAS(stepper_in3), gpios);
-gpio_dt_spec GpioOverlay::stepper_in4_ = GPIO_DT_SPEC_GET(DT_ALIAS(stepper_in4), gpios);
+gpio_dt_spec GpioOverlay::stepper_step_   = GPIO_DT_SPEC_GET(DT_ALIAS(stepper_step), gpios);
+gpio_dt_spec GpioOverlay::stepper_dir_    = GPIO_DT_SPEC_GET(DT_ALIAS(stepper_dir), gpios);
+gpio_dt_spec GpioOverlay::stepper_enable_ = GPIO_DT_SPEC_GET(DT_ALIAS(stepper_enable), gpios);
 
 /* ============================================================
  * INIT FUNCTION
@@ -51,24 +50,22 @@ bool GpioOverlay::init()
         return false;
     }
 
-    if (!device_is_ready(stepper_in1_.port) ||
-        !device_is_ready(stepper_in2_.port) ||
-        !device_is_ready(stepper_in3_.port) ||
-        !device_is_ready(stepper_in4_.port)) {
-        LOG_ERR("Stepper GPIO not ready");
+    if (!device_is_ready(stepper_step_.port) ||
+        !device_is_ready(stepper_dir_.port) ||
+        !device_is_ready(stepper_enable_.port)) {
+        LOG_ERR("TMC2209 GPIO not ready");
         return false;
     }
 
-    ret = gpio_pin_configure_dt(&stepper_in1_, GPIO_OUTPUT_INACTIVE);
+    ret = gpio_pin_configure_dt(&stepper_step_, GPIO_OUTPUT_INACTIVE);
     if (ret < 0) { return false; }
 
-    ret = gpio_pin_configure_dt(&stepper_in2_, GPIO_OUTPUT_INACTIVE);
+    ret = gpio_pin_configure_dt(&stepper_dir_, GPIO_OUTPUT_INACTIVE);
     if (ret < 0) { return false; }
 
-    ret = gpio_pin_configure_dt(&stepper_in3_, GPIO_OUTPUT_INACTIVE);
-    if (ret < 0) { return false; }
-
-    ret = gpio_pin_configure_dt(&stepper_in4_, GPIO_OUTPUT_INACTIVE);
+    /* INACTIVE here means "not enabled" thanks to GPIO_ACTIVE_LOW
+     * on the stepper-enable alias, so the driver boots disabled. */
+    ret = gpio_pin_configure_dt(&stepper_enable_, GPIO_OUTPUT_INACTIVE);
     if (ret < 0) { return false; }
 
     /* Cache CAN device handle for later retrieval */
@@ -108,16 +105,38 @@ void GpioOverlay::setHeartbeatLed(bool enable)
 }
 
 /* ============================================================
- * STEPPER CONTROL
+ * TMC2209 STEP/DIR/ENABLE CONTROL
  * ============================================================
  */
 
-void GpioOverlay::setStepperPins(bool in1, bool in2, bool in3, bool in4)
+void GpioOverlay::setStepperStep(bool level)
 {
-    gpio_pin_set_dt(&stepper_in1_, static_cast<int>(in1));
-    gpio_pin_set_dt(&stepper_in2_, static_cast<int>(in2));
-    gpio_pin_set_dt(&stepper_in3_, static_cast<int>(in3));
-    gpio_pin_set_dt(&stepper_in4_, static_cast<int>(in4));
+    if (stepper_step_.port == nullptr) {
+        return;
+    }
+
+    gpio_pin_set_dt(&stepper_step_, static_cast<int>(level));
+}
+
+void GpioOverlay::setStepperDir(bool forward)
+{
+    if (stepper_dir_.port == nullptr) {
+        return;
+    }
+
+    gpio_pin_set_dt(&stepper_dir_, static_cast<int>(forward));
+}
+
+void GpioOverlay::setStepperEnable(bool enable)
+{
+    if (stepper_enable_.port == nullptr) {
+        return;
+    }
+
+    /* stepper_enable_ is GPIO_ACTIVE_LOW in the devicetree, so
+     * gpio_pin_set_dt() already handles the active-low inversion:
+     * passing 1 here drives the physical EN pin low (enabled). */
+    gpio_pin_set_dt(&stepper_enable_, static_cast<int>(enable));
 }
 
 /* ============================================================
@@ -142,7 +161,8 @@ const struct device *GpioOverlay::getCanDevice()
 void gpio_overlay_reset_outputs()
 {
     motor_node::GpioOverlay::setHeartbeatLed(false);
-    motor_node::GpioOverlay::setStepperPins(false, false, false, false);
+    motor_node::GpioOverlay::setStepperEnable(false);
+    motor_node::GpioOverlay::setStepperStep(false);
 }
 
 /* ============================================================

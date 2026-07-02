@@ -10,12 +10,11 @@
 
 / {
     aliases {
-        heartbeat-led = &heartbeat_led;
-        stepper-in1   = &stepper_in1;
-        stepper-in2   = &stepper_in2;
-        stepper-in3   = &stepper_in3;
-        stepper-in4   = &stepper_in4;
-        canfd0        = &fdcan1;
+        heartbeat-led   = &heartbeat_led;
+        stepper-step    = &stepper_step;
+        stepper-dir     = &stepper_dir;
+        stepper-enable  = &stepper_enable;
+        canfd0          = &fdcan1;
     };
 
     heartbeat_leds {
@@ -27,27 +26,36 @@
         };
     };
 
-    stepper_outputs {
+    /* ============================================================
+     * TMC2209 STEP/DIR/EN outputs
+     *
+     * Reuses the GPIOB pins previously wired to the L298N IN1-IN4
+     * inputs (PB11-PB14). Only 3 of the 4 former pins are needed
+     * for TMC2209 STEP/DIR/EN control, so PB14 is now free.
+     *
+     * ENABLE is GPIO_ACTIVE_LOW because the TMC2209's EN pin is
+     * hardware active-low (driver outputs enabled when EN is
+     * driven low). Declaring it ACTIVE_LOW here lets application
+     * code treat gpio_pin_set_dt(&enable, 1) as "enable the
+     * driver" regardless of the pin's physical polarity.
+     * ============================================================
+     */
+    tmc2209_outputs {
         compatible = "gpio-leds";
 
-        stepper_in1: stepper_in1 {
+        stepper_step: stepper_step {
             gpios = <&gpiob 11 GPIO_ACTIVE_HIGH>;
-            label = "STEPPER_IN1";
+            label = "TMC2209_STEP";
         };
 
-        stepper_in2: stepper_in2 {
+        stepper_dir: stepper_dir {
             gpios = <&gpiob 12 GPIO_ACTIVE_HIGH>;
-            label = "STEPPER_IN2";
+            label = "TMC2209_DIR";
         };
 
-        stepper_in3: stepper_in3 {
-            gpios = <&gpiob 13 GPIO_ACTIVE_HIGH>;
-            label = "STEPPER_IN3";
-        };
-
-        stepper_in4: stepper_in4 {
-            gpios = <&gpiob 14 GPIO_ACTIVE_HIGH>;
-            label = "STEPPER_IN4";
+        stepper_enable: stepper_enable {
+            gpios = <&gpiob 13 GPIO_ACTIVE_LOW>;
+            label = "TMC2209_ENABLE";
         };
     };
 };

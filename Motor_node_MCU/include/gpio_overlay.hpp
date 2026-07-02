@@ -53,13 +53,28 @@ public:
     static void setHeartbeatLed(bool enable);
 
     /**
-     * @brief Set stepper motor GPIO pins (full step control).
-     * @param in1 IN1 state
-     * @param in2 IN2 state
-     * @param in3 IN3 state
-     * @param in4 IN4 state
+     * @brief Drive the TMC2209 STEP pin.
+     * @param level true = STEP pin driven high, false = low.
      */
-    static void setStepperPins(bool in1, bool in2, bool in3, bool in4);
+    static void setStepperStep(bool level);
+
+    /**
+     * @brief Drive the TMC2209 DIR pin.
+     * @param forward true = forward rotation, false = reverse.
+     */
+    static void setStepperDir(bool forward);
+
+    /**
+     * @brief Drive the TMC2209 ENABLE pin.
+     *
+     * The devicetree alias for this pin is GPIO_ACTIVE_LOW (matching
+     * the TMC2209's hardware-active-low EN input), so callers always
+     * use normal positive logic here: true = driver outputs enabled,
+     * false = driver outputs disabled (coils free / de-energized).
+     *
+     * @param enable true = enable driver outputs, false = disable.
+     */
+    static void setStepperEnable(bool enable);
 
     /**
      * @brief Get CAN device handle (FDCAN1).
@@ -72,10 +87,9 @@ private:
 
     static gpio_dt_spec heartbeat_led_;
 
-    static gpio_dt_spec stepper_in1_;
-    static gpio_dt_spec stepper_in2_;
-    static gpio_dt_spec stepper_in3_;
-    static gpio_dt_spec stepper_in4_;
+    static gpio_dt_spec stepper_step_;
+    static gpio_dt_spec stepper_dir_;
+    static gpio_dt_spec stepper_enable_;
 };
 
 } // namespace motor_node

@@ -1,7 +1,7 @@
 /*
  * SPDX-License-Identifier: Apache-2.0
  *
- * Stepper Motor Driver Implementation
+ * Stepper Motor Driver Implementation (TMC2209, STEP/DIR mode)
  * Motor Node MCU
  * Board : STM32 NUCLEO-G474RE
  * RTOS  : Zephyr 3.7 LTS
@@ -17,28 +17,6 @@ LOG_MODULE_REGISTER(stepper_motor, CONFIG_LOG_DEFAULT_LEVEL);
 
 namespace motor_node
 {
-
-/* ============================================================
- * INTERNAL FULL-STEP SEQUENCE
- * ============================================================
- * Sequence for L298N (2-phase ON full-step)
- *
- * Step 0: 1 0 1 0
- * Step 1: 0 1 1 0
- * Step 2: 0 1 0 1
- * Step 3: 1 0 0 1
- *
- * Each row = IN1 IN2 IN3 IN4
- * ============================================================
- */
-
-static constexpr bool kStepSequence[4][4] =
-{
-    { true,  false, true,  false }, // step 0
-    { false, true,  true,  false }, // step 1
-    { false, true,  false, true  }, // step 2
-    { true,  false, false, true  }  // step 3
-};
 
 /* ============================================================
  * STATE VARIABLES
@@ -62,12 +40,15 @@ static std::uint32_t g_last_step_time_ms = 0U;
 
 void StepperMotorDriver::init()
 {
-    running_    = false;
-    step_index_ = 0U;
+    running_       = false;
+    direction_     = true;
+    speed_percent_ = 50U;
 
     g_initialized = true;
 
-    LOG_INF("StepperMotorDriver initialized");
+    GpioOverlay::setStepperDir(direction_);
+
+    LOG_INF("StepperMotorDriver initialized (TMC2209, speed=%u%%)", speed_percent_);
 }
 
 /* ============================================================
@@ -81,9 +62,12 @@ void StepperMotorDriver::start()
         init();
     }
 
+    GpioOverlay::setStepperDir(direction_);
+    GpioOverlay::setStepperEnable(true);
+
     running_ = true;
 
-    LOG_INF("Stepper motor START");
+    LOG_INF("Stepper motor START (TMC2209 enabled, speed=%u%%)", speed_percent_);
 }
 
 /* ============================================================
@@ -95,32 +79,60 @@ void StepperMotorDriver::stop()
 {
     running_ = false;
 
-    /* Immediately de-energize all coils */
-    GpioOverlay::setStepperPins(false, false, false, false);
+    /* Immediately disable driver outputs and drop STEP low */
+    GpioOverlay::setStepperEnable(false);
+    GpioOverlay::setStepperStep(false);
 
-    LOG_INF("Stepper motor STOP");
+    LOG_INF("Stepper motor STOP (TMC2209 disabled)");
+}
+
+/* ============================================================
+ * SPEED CONTROL
+ * ============================================================
+ */
+
+void StepperMotorDriver::setSpeedPercent(std::uint8_t percent)
+{
+    speed_percent_ = (percent > 100U) ? 100U : percent;
+
+    LOG_INF("Stepper speed set to %u%%", speed_percent_);
+}
+
+std::uint32_t StepperMotorDriver::stepDelayMs()
+{
+    const std::uint32_t range = kMaxStepDelayMs - kMinStepDelayMs;
+
+    return kMaxStepDelayMs - ((range * speed_percent_) / 100U);
+}
+
+/* ============================================================
+ * DIRECTION CONTROL
+ * ============================================================
+ */
+
+void StepperMotorDriver::setDirection(bool forward)
+{
+    direction_ = forward;
+
+    GpioOverlay::setStepperDir(direction_);
 }
 
 /* ============================================================
  * STEP EXECUTION
  * ============================================================
- * Single definition — includes timestamp update for the
- * optional safety watchdog extension (Rule: no duplicate defs).
+ * Emits one STEP pulse: STEP high for kStepPulseWidthUs, then low.
+ * The TMC2209 latches a new microstep on the rising edge; DIR is
+ * held constant while pulsing. Single definition — includes
+ * timestamp update for the optional safety watchdog extension
+ * (Rule: no duplicate defs).
  * ============================================================
  */
 
 void StepperMotorDriver::step()
 {
-    const bool *pattern = kStepSequence[step_index_];
-
-    GpioOverlay::setStepperPins(
-        pattern[0],
-        pattern[1],
-        pattern[2],
-        pattern[3]
-    );
-
-    step_index_ = static_cast<std::uint8_t>((step_index_ + 1U) & 0x03U);
+    GpioOverlay::setStepperStep(true);
+    k_busy_wait(kStepPulseWidthUs);
+    GpioOverlay::setStepperStep(false);
 
     /* Update watchdog timestamp */
     g_last_step_time_ms = k_uptime_get_32();
@@ -141,7 +153,7 @@ void StepperMotorDriver::update()
 
     step();
 
-    k_msleep(kStepDelayMs);
+    k_msleep(stepDelayMs());
 }
 
 } // namespace motor_node
@@ -155,16 +167,17 @@ void stepper_motor_emergency_stop()
 {
     motor_node::StepperMotorDriver::stop();
 
-    /* Redundant coil de-energize for safety */
-    motor_node::GpioOverlay::setStepperPins(false, false, false, false);
+    /* Redundant disable/STEP-low for safety */
+    motor_node::GpioOverlay::setStepperEnable(false);
+    motor_node::GpioOverlay::setStepperStep(false);
 }
 
 /* ============================================================
  * DEBUG HELPERS
  * ============================================================
- * Note: running_ and step_index_ are private; debug info is
- * logged inside the class methods. External debug only reports
- * the initialized flag (which is file-scope, not private).
+ * Note: running_, direction_, speed_percent_ are private; debug
+ * info is logged inside the class methods. External debug only
+ * reports the initialized flag (which is file-scope, not private).
  * ============================================================
  */
 

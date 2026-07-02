@@ -3096,10 +3096,9 @@ stm32_lp_tick_source: &lptim1 {
 / {
     aliases {
         heartbeat-led = &heartbeat_led;
-        stepper-in1 = &stepper_in1;
-        stepper-in2 = &stepper_in2;
-        stepper-in3 = &stepper_in3;
-        stepper-in4 = &stepper_in4;
+        stepper-step = &stepper_step;
+        stepper-dir = &stepper_dir;
+        stepper-enable = &stepper_enable;
         canfd0 = &fdcan1;
     };
 
@@ -3111,28 +3110,23 @@ stm32_lp_tick_source: &lptim1 {
             label = "HEARTBEAT_LED";
         };
     };
-
-    stepper_outputs {
+# 43 "/home/babu-inc-5831/Downloads/My_Project/HCE_Task_1/Motor_node_MCU/boards/nucleo_g474re.overlay"
+    tmc2209_outputs {
         compatible = "gpio-leds";
 
-        stepper_in1: stepper_in1 {
+        stepper_step: stepper_step {
             gpios = <&gpiob 11 (0 << 0)>;
-            label = "STEPPER_IN1";
+            label = "TMC2209_STEP";
         };
 
-        stepper_in2: stepper_in2 {
+        stepper_dir: stepper_dir {
             gpios = <&gpiob 12 (0 << 0)>;
-            label = "STEPPER_IN2";
+            label = "TMC2209_DIR";
         };
 
-        stepper_in3: stepper_in3 {
-            gpios = <&gpiob 13 (0 << 0)>;
-            label = "STEPPER_IN3";
-        };
-
-        stepper_in4: stepper_in4 {
-            gpios = <&gpiob 14 (0 << 0)>;
-            label = "STEPPER_IN4";
+        stepper_enable: stepper_enable {
+            gpios = <&gpiob 13 (1 << 0)>;
+            label = "TMC2209_ENABLE";
         };
     };
 };

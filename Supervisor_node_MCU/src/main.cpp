@@ -58,9 +58,11 @@ static void CanThread()
  * SAFETY EVALUATION THREAD (1 second cycle)
  * ============================================================
  * Checks:
- * - Flow range
- * - Pressure range
- * - Triggers STOP if out of range
+ * - Combined fault: pressure HIGH (above max) together with
+ *   flow LOW (below min) at the same time.
+ * - Independent excursions of either signal alone are NOT a
+ *   fault; only the simultaneous high-pressure / low-flow
+ *   combination triggers STOP + ALARM.
  * ============================================================
  */
 static void SafetyThread()
@@ -69,17 +71,14 @@ static void SafetyThread()
 
     while (true)
     {
-        bool flow_fault =
-            (g_flow_value < kFlowMin_mL_min) ||
-            (g_flow_value > kFlowMax_mL_min);
+        bool pressure_high = (g_pressure_value > kPressureMax_mmHg);
+        bool flow_low       = (g_flow_value < kFlowMin_mL_min);
 
-        bool pressure_fault =
-            (g_pressure_value < kPressureMin_mmHg) ||
-            (g_pressure_value > kPressureMax_mmHg);
+        bool combined_fault = pressure_high && flow_low;
 
-        if (flow_fault || pressure_fault)
+        if (combined_fault)
         {
-            LOG_ERR("Safety fault detected -> STOP MOTOR");
+            LOG_ERR("Safety fault detected (pressure high + flow low) -> STOP MOTOR");
 
             CanFd::SendStopMotor();
 

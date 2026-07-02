@@ -1,0 +1,30 @@
+cmake_minimum_required(VERSION 3.20.0)
+
+set(CMAKE_CXX_STANDARD 20)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(CMAKE_CXX_EXTENSIONS OFF)
+
+find_package(Zephyr REQUIRED HINTS $ENV{ZEPHYR_BASE})
+project(motor_node LANGUAGES CXX)
+
+zephyr_compile_options(
+  -Wall
+  -Wextra
+  -Werror
+  -Wvolatile
+)
+
+target_sources(app PRIVATE
+  ${CMAKE_CURRENT_SOURCE_DIR}/src/main.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/src/gpio_overlay.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/src/heartbeat.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/src/stepper_motor_driver.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/src/motor_controller.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/../common/motor/src/can_bus_driver.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/../common/motor/src/message_codec.cpp
+)
+
+target_include_directories(app PRIVATE
+  ${CMAKE_CURRENT_SOURCE_DIR}/include
+  ${CMAKE_CURRENT_SOURCE_DIR}/../common/motor/include
+)

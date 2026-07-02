@@ -25,10 +25,9 @@
 		volt-sensor0 = &vref;
 		volt-sensor1 = &vbat;
 		heartbeat-led = &heartbeat_led;
-		stepper-in1 = &stepper_in1;
-		stepper-in2 = &stepper_in2;
-		stepper-in3 = &stepper_in3;
-		stepper-in4 = &stepper_in4;
+		stepper-step = &stepper_step;
+		stepper-dir = &stepper_dir;
+		stepper-enable = &stepper_enable;
 		canfd0 = &fdcan1;
 	};
 	soc {
@@ -1019,23 +1018,19 @@
 			label = "HEARTBEAT_LED";
 		};
 	};
-	stepper_outputs {
+	tmc2209_outputs {
 		compatible = "gpio-leds";
-		stepper_in1: stepper_in1 {
+		stepper_step: stepper_step {
 			gpios = < &gpiob 0xb 0x0 >;
-			label = "STEPPER_IN1";
+			label = "TMC2209_STEP";
 		};
-		stepper_in2: stepper_in2 {
+		stepper_dir: stepper_dir {
 			gpios = < &gpiob 0xc 0x0 >;
-			label = "STEPPER_IN2";
+			label = "TMC2209_DIR";
 		};
-		stepper_in3: stepper_in3 {
-			gpios = < &gpiob 0xd 0x0 >;
-			label = "STEPPER_IN3";
-		};
-		stepper_in4: stepper_in4 {
-			gpios = < &gpiob 0xe 0x0 >;
-			label = "STEPPER_IN4";
+		stepper_enable: stepper_enable {
+			gpios = < &gpiob 0xd 0x1 >;
+			label = "TMC2209_ENABLE";
 		};
 	};
 };

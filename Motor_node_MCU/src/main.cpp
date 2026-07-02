@@ -101,6 +101,7 @@ static bool system_init()
     ok &= CanFd::init();
 
     StepperMotorDriver::init();
+    StepperMotorDriver::setSpeedPercent(50U); /* TMC2209 default: 50% speed */
     Heartbeat::init();
 
     LOG_INF("System initialization complete");
@@ -199,7 +200,8 @@ static void system_shutdown()
     LOG_WRN("System shutdown requested");
 
     StepperMotorDriver::stop();
-    GpioOverlay::setStepperPins(false, false, false, false);
+    GpioOverlay::setStepperEnable(false);
+    GpioOverlay::setStepperStep(false);
     GpioOverlay::setHeartbeatLed(false);
 }
 
