@@ -14,6 +14,7 @@
 #include <cstdint>
 
 #include <zephyr/device.h>
+#include <zephyr/drivers/gpio.h>
 
 namespace hce::sensor_node {
 

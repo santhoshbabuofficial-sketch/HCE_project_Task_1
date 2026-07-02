@@ -7,13 +7,6 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 find_package(Zephyr REQUIRED HINTS $ENV{ZEPHYR_BASE})
 project(motor_node LANGUAGES CXX)
 
-zephyr_compile_options(
-  -Wall
-  -Wextra
-  -Werror
-  -Wvolatile
-)
-
 target_sources(app PRIVATE
   ${CMAKE_CURRENT_SOURCE_DIR}/src/main.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/src/gpio_overlay.cpp
@@ -22,6 +15,16 @@ target_sources(app PRIVATE
   ${CMAKE_CURRENT_SOURCE_DIR}/src/motor_controller.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/../common/motor/src/can_bus_driver.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/../common/motor/src/message_codec.cpp
+)
+
+# Strict warnings apply only to our own application code, not to
+# Zephyr's kernel/drivers/HAL/CMSIS sources (which are not -Werror clean
+# on this toolchain and are not ours to fix).
+target_compile_options(app PRIVATE
+  -Wall
+  -Wextra
+  -Werror
+  -Wvolatile
 )
 
 target_include_directories(app PRIVATE

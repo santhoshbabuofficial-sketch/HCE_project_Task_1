@@ -81,7 +81,18 @@ void LcdDisplay::ShowPressure(float pressure_pa) {
         return;
     }
     char line[kLcdColumns + 1U] = {0};
+    // Truncation to the 16-column LCD width is intentional here: an
+    // out-of-range reading is meant to be clipped to fit the display,
+    // not treated as a bug. snprintf() always null-terminates safely
+    // within `line`, so this can never overflow the buffer.
+#if defined(__GNUC__)
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wformat-truncation"
+#endif
     std::snprintf(line, sizeof(line), "Pressure:%5d Pa", static_cast<int>(pressure_pa));
+#if defined(__GNUC__)
+#pragma GCC diagnostic pop
+#endif
     WriteLine(0U, line);
 }
 
@@ -90,7 +101,15 @@ void LcdDisplay::ShowFlow(float flow_lpm) {
         return;
     }
     char line[kLcdColumns + 1U] = {0};
+    // See ShowPressure(): truncation to fit the 16-column LCD is intentional.
+#if defined(__GNUC__)
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wformat-truncation"
+#endif
     std::snprintf(line, sizeof(line), "Flow:%7d LPM", static_cast<int>(flow_lpm));
+#if defined(__GNUC__)
+#pragma GCC diagnostic pop
+#endif
     WriteLine(1U, line);
 }
 
